@@ -8,8 +8,12 @@ export interface KDoc {
   doc_id: string
   /** 上传时的原始文件名。 */
   filename: string
-  /** ISO 8601,带时区偏移。 */
-  created_at: string
+  /**
+   * ISO 8601,带时区偏移。
+   * **2026-09-22 起恒为 null**: 知识库内核换成 rag_v01(Milvus)后没有文档表, 没有上传时间这个概念;
+   * `fmtDateTime` 对 null 返回空串, 该列留空即可(契约 §2.3 已同步)。
+   */
+  created_at: string | null
   /** 该文档切块数。 */
   chunks: number
 }

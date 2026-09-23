@@ -23,6 +23,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 
 from agent.build import build_graph, make_llm
+from agent.contracts import SYNTHETIC_USER_PREFIXES, classify_interrupt
 from agent.service import AUTO_NOTICE, run_turn
 from agent.tasks import TaskManager
 from settings.config import get_settings
@@ -35,16 +36,13 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 def _interrupt_envelope(updates) -> dict:
     """把 Interrupt 载荷规范化成自描述信封:两类挂起用统一形状下发。
 
-    question/proposal 是不同 key(ask 与 memory 各写各的),前端只能靠 key
-    存在性猜类型,而恢复端点不校验类型,猜错会把 approved=True 当答案写进
-    对话(静默污染)。此处补显式 kind,前端按 kind 选恢复端点,不再靠猜。
+    识别收敛在 contracts.classify_interrupt(c5):新载荷自带 kind,兼容旧检查点
+    键名形状(question/proposal);恢复端点另有 _require_interrupt 校验类型。
+    未知形状给 unknown,不静默丢。
     """
     first = (updates[0].value if updates else None) or {}
-    if "proposal" in first:
-        return {"kind": "memory", "text": first["proposal"]}
-    if "question" in first:
-        return {"kind": "ask", "text": first["question"]}
-    return {"kind": "unknown", "text": str(first)}  # 兜底:新挂起类型不静默丢
+    kind, text = classify_interrupt(first)
+    return {"kind": kind, "text": text}
 
 
 def _require_interrupt(graph, config, expect: str) -> None:
@@ -53,9 +51,7 @@ def _require_interrupt(graph, config, expect: str) -> None:
     if not interrupts:
         raise HTTPException(status_code=400, detail="该会话没有待处理的挂起")
     value = (interrupts[0].value if interrupts else None) or {}
-    actual = ("memory" if "proposal" in value
-                else "ask" if "question" in value
-                else "unknown")
+    actual, _text = classify_interrupt(value)
     if actual != expect:
         raise HTTPException(
             status_code=400,
@@ -194,9 +190,9 @@ def threads_meta():
 @router.get("/threads/{thread_id}/messages")
 def thread_messages(thread_id:str):
     """历史消息回填:读 checkpointer state 的 messages,过滤内部合成消息
-    ([用户回答]: / 子智能体结果已回收,过滤规则与 memory 节点 _last_user_text
-    同源),附挂起态 pending_interrupt(与 SSE interrupt 信封同形,供前端
-    刷新后恢复挂起卡)。ToolMessage/空 content 的 AIMessage 一律跳过。"""
+    (前缀清单 contracts.SYNTHETIC_USER_PREFIXES 单一出处, c5),附挂起态
+    pending_interrupt(与 SSE interrupt 信封同形,供前端刷新后恢复挂起卡)。
+    ToolMessage/空 content 的 AIMessage 一律跳过。"""
     graph,_checkpointer,_usage,_tasks=_get_app()
     config={
         "configurable":{
@@ -209,9 +205,8 @@ def thread_messages(thread_id:str):
     for m in msgs:
         if isinstance(m,HumanMessage):
             c=m.content or ""
-            # 内部合成消息全部过滤:[用户回答] / 子智能体结果已回收 / (系统通知)自动汇总触发语
-            if (c.startswith("[用户回答]:") or c.startswith("子智能体结果已回收")
-                    or c.startswith("(系统通知)")):
+            # 内部合成消息全部过滤(三类前缀唯一出处:SYNTHETIC_USER_PREFIXES)
+            if any(c.startswith(p) for p in SYNTHETIC_USER_PREFIXES):
                 continue
             out.append({"role": "user", "content": c})
         elif isinstance(m, AIMessage):
@@ -220,12 +215,9 @@ def thread_messages(thread_id:str):
 
     ints = getattr(state, "interrupts", None) or []
     v = (ints[0].value if ints else None) or {}
-    if "proposal" in v:
-        pending = {"kind": "memory", "text": v["proposal"]}
-    elif "question" in v:
-        pending = {"kind": "ask", "text": v["question"]}
-    elif v:
-        pending = {"kind": "unknown", "text": str(v)}
+    if v:
+        kind, text = classify_interrupt(v)
+        pending = {"kind": kind, "text": text}
     else:
         pending = None
 

@@ -8,7 +8,7 @@ T3 收尾纪律:ResultSummary.warnings 强制列执行侧效应(写了哪些文�
 从消息历史中 AIMessage.tool_calls 收集,不依赖模型自报。
 
 使用位置:
-    - agent/build.py:build_graph() 中 build_executor_graph(llm) 直挂 executor 节点;
+    - agent/build.py:build_graph() 中 build_executor_graph(llm, tools=None) 直挂 executor 节点;
     - tests/test_executor.py:fake model 循环行为测试。
 """
 
@@ -93,8 +93,13 @@ def _collect_effects(messages: list) -> list[str]:
     return warns
 
 
-def build_executor_graph(llm) -> CompiledStateGraph:
-    """编译执行 ReAct 子图(共享键直挂,ADR-0009 方案 A)。"""
+def build_executor_graph(llm, tools: list | None = None) -> CompiledStateGraph:
+    """编译执行 ReAct 子图(共享键直挂,ADR-0009 方案 A)。
+
+    tools 可选注入(2026-09-23 架构整理 c3,见 ROADMAP §7):缺省才装配一次真实
+    工具集;提示词工具索引 meta 与 bind_tools 的工具集永远出自同一份列表,
+    测试直接传工具对象,不再穿透私有符号 monkeypatch。
+    """
     def _tools_meta(tools: list) -> str:
         """工具索引(一行一条,desc 截断 60 字):进 executor 系统提示词(09-DEV T4)。"""
         lines = []
@@ -104,8 +109,8 @@ def build_executor_graph(llm) -> CompiledStateGraph:
             lines.append(f"- {t.name}: {desc[:60]}")
         return "\n".join(lines)
 
-    tools = _gather_tools()
-    meta = _tools_meta(tools)
+    tool_list = _gather_tools() if tools is None else list(tools)
+    meta = _tools_meta(tool_list)
     exec_prompt = load_prompt("subagents/executor", tools_meta=meta)
     system_prompt = load_prompt("base") + "\n\n" + exec_prompt
 
@@ -136,7 +141,7 @@ def build_executor_graph(llm) -> CompiledStateGraph:
 
     return build_react_subgraph(
         llm=llm,
-        tools=_gather_tools(),
+        tools=tool_list,
         system_prompt=system_prompt,
         max_iterations=MAX_ITERATIONS,
         build_summary=build_summary,

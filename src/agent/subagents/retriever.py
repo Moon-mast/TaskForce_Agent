@@ -6,8 +6,9 @@
 会以 content 自答而非调强制工具,with_structured_output 解析普通文本即崩)。
 
 使用位置:
-    - agent/build.py:build_graph() 中 build_retriever_graph(llm) 直挂 retriever 节点;
-    - tests/test_retriever.py:检索子图行为测试。
+    - agent/build.py:build_graph() 中 build_retriever_graph(llm, search_backend=None)
+      直挂 retriever 节点;
+    - tests/test_retriever.py:工厂注入假后端的检索子图行为测试。
 """
 
 import json
@@ -19,7 +20,7 @@ from langgraph.graph.state import CompiledStateGraph
 from agent.contracts import ResultSummary, SubgraphContract
 from agent.subagents.react import ReactState, build_react_subgraph, extract_answer
 from settings.loader import load_prompt
-from tools.rag.kb_search import kb_search
+from tools.rag.kb_search import hit_key, make_kb_search
 
 MAX_ITERATIONS = 5  # 工具执行轮数上限(每轮≈2 super-steps;主图 recursion_limit 兜底)
 
@@ -27,7 +28,8 @@ MAX_ITERATIONS = 5  # 工具执行轮数上限(每轮≈2 super-steps;主图 rec
 
 
 def _collect_hits(messages: list) -> list[dict]:
-    """从 kb_search 的 ToolMessage(JSON 数组)确定性重建 hits,跨调用按 (doc_id, seq) 去重。"""
+    """从 kb_search 的 ToolMessage(JSON 数组)确定性重建 hits,跨调用按 hit_key 去重
+    (键定义唯一出处在 tools/rag/kb_search.hit_key, c6)。"""
     seen: set[tuple] = set()
     hits: list[dict] = []
     for m in messages:
@@ -40,16 +42,22 @@ def _collect_hits(messages: list) -> list[dict]:
         if not isinstance(items, list):
             continue
         for h in items:
-            key = (h.get("doc_id"), h.get("seq"))
+            key = hit_key(h)
             if key not in seen:
                 seen.add(key)
                 hits.append(h)
     return hits
 
 
-def build_retriever_graph(llm) -> CompiledStateGraph:
-    """编译检索 ReAct 子图(共享键直挂,ADR-0009 方案 A)。"""
+def build_retriever_graph(llm, search_backend=None) -> CompiledStateGraph:
+    """编译检索 ReAct 子图(共享键直挂,ADR-0009 方案 A)。
+
+    search_backend 显式注入(c6,见 ROADMAP §7):callable(query, top_k) -> 命中列表,
+    缺省 make_kb_search 内部绑 rag_v01.search;测试直接传假后端,
+    不再打桩模块私有符号(原裸赋值假件实测泄漏过)。
+    """
     system_prompt = load_prompt("base") + "\n\n" + load_prompt("subagents/retriever")
+    kb_tool = make_kb_search(search_backend)
 
     def build_summary(state: ReactState) -> ResultSummary:
         """收尾:被上限掐断→partial;无命中→need_clarification(不调 LLM);
@@ -91,7 +99,7 @@ def build_retriever_graph(llm) -> CompiledStateGraph:
 
     return build_react_subgraph(
         llm=llm,
-        tools=[kb_search],
+        tools=[kb_tool],
         system_prompt=system_prompt,
         max_iterations=MAX_ITERATIONS,
         build_summary=build_summary,

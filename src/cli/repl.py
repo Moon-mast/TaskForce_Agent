@@ -22,6 +22,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from agent.build import build_graph, make_llm
+from agent.contracts import classify_interrupt
 from agent.service import AUTO_NOTICE, run_turn
 from agent.tasks import TaskManager
 from cli.commands import build_commands
@@ -34,14 +35,14 @@ from settings.usage import UsageTracker
 
 
 def _resume_confirm(ctx: ReplContext, renderer: StreamRenderer,
-                    turn_lock: threading.Lock, value: dict) -> bool:
-    """memory 确认挂起:显示提案,拦截输入直到 /confirm yes|no,再恢复执行。
+                    turn_lock: threading.Lock, proposal: str) -> bool:
+    """memory 确认挂起(classify 分出的提案文本):显示提案,拦截输入直到 /confirm yes|no。
 
     返回 False 表示用户 EOF/中断退出 REPL。与 ask 挂起不同,此处拦截一切
     非确认输入(含其他斜杠命令),保证单一挂起点语义(ADR-0008)。
     """
     console = ctx.console
-    console.print(f"[yellow]智能体想记住:[/yellow] {value.get('proposal', '')}")
+    console.print(f"[yellow]智能体想记住:[/yellow] {proposal}")
     console.print("[dim]请用 /confirm yes 或 /confirm no(其他输入将被拦截)[/dim]")
     while True:
         try:
@@ -72,10 +73,10 @@ def _resume_confirm(ctx: ReplContext, renderer: StreamRenderer,
 
 
 def _resume_ask(ctx: ReplContext, renderer: StreamRenderer, commands: dict,
-                turn_lock: threading.Lock, value: dict) -> bool:
-    """ask 问询挂起:打印问题,自由文本输入即回答;返回 False 表示退出 REPL。"""
+                turn_lock: threading.Lock, question: str) -> bool:
+    """ask 问询挂起(classify 分出的问题文本):打印问题,自由文本输入即回答;False=退出 REPL。"""
     console = ctx.console
-    console.print(f"[bold yellow]Agent 提问 ›[/bold yellow] {value.get('question', '')}")
+    console.print(f"[bold yellow]Agent 提问 ›[/bold yellow] {question}")
     try:
         answer = console.input("[bold green]你的回答 ›[/bold green] ").strip()
     except (EOFError, KeyboardInterrupt):
@@ -176,9 +177,13 @@ def main() -> None:
         snapshot = graph.get_state(config)
         pending = getattr(snapshot, "interrupts", None)
         if pending:
-            value = pending[0].value if isinstance(pending[0].value, dict) else {}
-            ok = (_resume_confirm(ctx, renderer, turn_lock, value) if "proposal" in value
-                  else _resume_ask(ctx, renderer, commands, turn_lock, value))
+            raw = pending[0].value
+            kind, text = classify_interrupt(raw)
+            if kind == "unknown":
+                # c5:未知挂起不再静默落入问询——显式告警后按自由文本兜底,不卡死循环
+                console.print(f"[red]未识别的挂起类型[/](原始:{text}),按问询处理")
+            ok = (_resume_confirm(ctx, renderer, turn_lock, text) if kind == "memory"
+                  else _resume_ask(ctx, renderer, commands, turn_lock, text))
             if not ok:
                 return
             continue

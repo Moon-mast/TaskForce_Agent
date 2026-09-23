@@ -126,7 +126,9 @@ def test_memory_proposal_interrupt_then_confirm_yes(monkeypatch):
 
     _ask(graph, config, "我每天六点起床跑步")
     st = graph.get_state(config)
-    assert st.interrupts and st.interrupts[0].value["proposal"] == "用户每天晨跑五公里"
+    assert st.interrupts and st.interrupts[0].value == {
+        "kind": "memory", "text": "用户每天晨跑五公里"
+    }
     assert len(st.interrupts) == 1  # 单一挂起点(ADR-0008):任意时刻至多一个挂起
 
     list(graph.stream(Command(resume=True), config, stream_mode="updates"))

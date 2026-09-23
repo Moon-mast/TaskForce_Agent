@@ -1,0 +1,23 @@
+[project]
+name = "taskforce-eval"
+version = "0.0.0"
+description = "rag_v01 的评估环境: ragas 与主项目依赖互斥(ragas->instructor 要 rich<15, 主项目要 rich>=15), 所以单独成环境, 主环境一个字节都不动"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain-community<0.4",
+    "ragas>=0.4.3",
+    "taskforce[rag2]",   # rag2 = pymilvus + dashscope: 评估要跑 search 与 embed_query
+]
+
+[tool.uv]
+# 只在**这个**环境里把 rich 放宽到 <15。主项目的 pyproject 仍然声明 rich>=15, 主 uv.lock 不受影响。
+# 注意: 这是"环境级 override", 不是改主项目约束 —— 评估环境里 openai 也会随之降到 <3.6(经 jiter 传导),
+# 但那也只是评估环境自己的事。
+override-dependencies = ["rich>=14,<15"]
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
+
+[tool.uv.sources]
+taskforce = { path = "../" }

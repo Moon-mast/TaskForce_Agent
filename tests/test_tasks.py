@@ -154,3 +154,43 @@ def test_lazy_subgraph_build():
     tm.submit([("retriever", _contract())])
     _drain_wait(tm)
     assert set(tm._subgraphs) == {"retriever"}
+
+
+def test_registry_compiles_once_per_llm_agent(monkeypatch):
+    """c7:注册表同 llm 同 agent 只编译一次;不同 agent 各自惰性(不牵连编译)。"""
+    import agent.subagents.registry as reg
+
+    calls: list[str] = []
+    for name in ("retriever", "research", "executor"):
+        monkeypatch.setitem(
+            reg.BUILDERS, name,
+            lambda llm, _n=name: calls.append(_n) or object(),
+        )
+    llm = object()
+    a = reg.get_subgraph(llm, "retriever")
+    b = reg.get_subgraph(llm, "retriever")
+    assert a is b and calls == ["retriever"]  # 第二次命中缓存,不重复编译
+    reg.get_subgraph(llm, "research")
+    assert calls == ["retriever", "research"]  # research 不牵连 executor
+
+
+def test_registry_cache_isolated_by_llm():
+    """c7:不同 llm 各用各的编译实例(测试 fake 互不串),同 llm 稳定复用。"""
+    from agent.subagents.registry import get_subgraph
+
+    a, b = _Llm(), _Llm()
+    assert get_subgraph(a, "research") is get_subgraph(a, "research")
+    assert get_subgraph(a, "research") is not get_subgraph(b, "research")
+
+
+def test_build_graph_and_tasks_share_instances():
+    """c7:双路径同一批实例 —— chat.py 同款时序(先 TaskManager 后 build_graph),
+    后台 invoke 用的子图与 build_graph 直挂的是同一编译产物(装配唯一出处)。"""
+    from agent.build import build_graph
+    from agent.subagents.registry import get_subgraph
+
+    llm = _Llm()
+    tasks = TaskManager(llm)
+    build_graph(llm, tasks=tasks)
+    for name in ("retriever", "research", "executor"):
+        assert tasks._subgraph(name) is get_subgraph(llm, name)

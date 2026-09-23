@@ -13,7 +13,7 @@
 | 依赖模块 | 需要其中的什么 |
 |---|---|
 | [02-persistence-cli](../02-persistence-cli/DEV.md) | checkpointer、SessionStore |
-| [04-rag](../04-rag/DEV.md) | RAGStore(CRUD) |
+| [04-rag](../04-rag/DEV.md) | **rag_v01**(`ingest` + `store.list_docs/delete_doc`;2026-09-22 前是 `tools/rag` 的 RAGStore) |
 | [05/06/07/08/09/10](../05-retriever-subagent/DEV.md) | 各能力(经 build_graph/run_turn 统一暴露) |
 
 ## 3. 产出物(文件清单)

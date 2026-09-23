@@ -14,13 +14,15 @@ from langchain_core.messages import AIMessage, AIMessageChunk
 from langgraph.errors import GraphRecursionError
 from langgraph.types import Command
 
+from agent.contracts import PREFIX_SYSTEM_NOTICE
+
 # ADR-0009 承诺:上下文全量保留 + 超阈值日志告警(只观测不阻断)。
 # 会话消息数超阈值时打印膨胀提示,长会话可 /new 换线程。
 _MESSAGE_WARN_THRESHOLD = 40
 
 # 后台任务全批完成后的自动汇总触发语:被 REPL watcher 与 API /chat/summary 共用,
-# 保证双入口语义一致(历史回填按此前缀过滤,不出现在对话记录里)。
-AUTO_NOTICE = "(系统通知)后台子智能体任务已完成,请直接汇总结果。"
+# 保证双入口语义一致(历史回填按 PREFIX_SYSTEM_NOTICE 过滤,不出现在对话记录里)。
+AUTO_NOTICE = PREFIX_SYSTEM_NOTICE + "后台子智能体任务已完成,请直接汇总结果。"
 
 
 def run_turn(graph, config, text=None, resume=None, on_token=None, on_route=None,on_interrupt=None):

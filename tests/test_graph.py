@@ -22,6 +22,7 @@ from agent.supervisor import (
     dispatch_sends,
     route_node,
 )
+from rag_v01.contracts import ChildHit, RetrievedChunk
 from settings.loader import load_prompt
 
 # ---------- loader 单测(T1 验收补充) ----------
@@ -208,17 +209,38 @@ class FakeScriptedLLM:
 
 
 class _FakeKbStore:
-    """假知识库:任何查询都返回一条固定命中(retriever ReAct 子图测试用)。"""
+    """假知识库:任何查询都返回一条固定命中(retriever ReAct 子图测试用)。
+
+    返回**真内核的 `RetrievedChunk`**(不是 JSON dict)—— 适配层 kb_search 从它取
+    `doc_id/source/hits[0]` 再拼成 JSON, 所以这里换成契约类型而不是手写 dict。
+    """
 
     def search(self, query, top_k=5):
-        return [{"doc_id": "d1", "filename": "kb.md", "seq": 0,
-                 "content": "知识库命中:昆玉河沿岸有玉渊潭公园。", "score": 0.1}][:top_k]
+        rows = [
+            RetrievedChunk(
+                parent_id="d1:p001",
+                parent_text="知识库命中:昆玉河沿岸有玉渊潭公园。",
+                rrf_rank=1,
+                hits=[ChildHit(chunk_id="d1:p001:c001", text="昆玉河沿岸有玉渊潭公园。",
+                               chunk_type="text", rrf_score=0.1)],
+                doc_id="d1",
+                source="kb.md",
+            )
+        ]
+        return rows[:top_k]
 
 
 @pytest.fixture(autouse=True)
 def _fake_retriever_store(monkeypatch):
-    """retriever 子图不依赖真实 DB/embedding:统一替换 kb_search 的默认 store。"""
-    monkeypatch.setattr("tools.rag.kb_search._default_store", lambda: _FakeKbStore())
+    """retriever 子图不依赖真实 DB/embedding/Milvus:统一替换 kb_search 的真检索。
+
+    替换点在**适配层** `kb_search._default_search`(不是 rag_v01 内部), 这样连
+    "检索结果 → JSON 契约"那一段也一并被假件罩住, 测试仍不需要真 Milvus。
+    """
+    monkeypatch.setattr(
+        "tools.rag.kb_search._default_search",
+        lambda query, top_k: _FakeKbStore().search(query, top_k),
+    )
 
 
 def _trace(graph, text="帮我查X"):

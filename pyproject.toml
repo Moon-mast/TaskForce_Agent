@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "TaskForce -- 基于 LangGraph 的个人 Agent 工作台:知识库问答、联网调研、沙箱代码执行"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-
     "pyyaml>=6.0",
     "fastapi>=0.141.1",
     "uvicorn>=0.52.4",
@@ -23,6 +22,14 @@ dependencies = [
     "rich>=15.0.0",
     "rank-bm25>=0.2.2",
     "jieba>=0.42.1",
+    "docling>=2.128.0",
+    "e2b-code-interpreter>=2.10.0",
+]
+
+[project.optional-dependencies]
+rag2 = [
+    "dashscope>=1.27.6",
+    "pymilvus>=2.5,<3",
 ]
 
 [dependency-groups]
@@ -35,6 +42,10 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
+
 [tool.hatch.build.targets.wheel]
 packages = [
     "src/agent",
@@ -43,11 +54,11 @@ packages = [
     "src/settings",
     "src/api",
     "src/cli",
+    "src/rag_v01",
 ]
-
-[[tool.uv.index]]
-url = "https://mirrors.aliyun.com/pypi/simple/"
-default = true
+# 注意: 这七个目录必须**同深度**(都在 src/ 下)。hatch 的 editable 安装只写一条
+# `_editable_impl_*.pth` 指向 src/, 混放 `src/new_module/rag_v01` 这类更深目录会让新包 import 不到
+# —— rag_v01 于 2026-09-22 从 src/new_module/rag_v01 挪到 src/rag_v01 就是为了这条。
 
 [tool.ruff]
 line-length = 100
@@ -56,8 +67,17 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B"]
 
+[tool.ruff.lint.isort]
+# rag_v01 是新 RAG 模块的顶层包名(源码在 src/rag_v01), 声明为 first-party
+known-first-party = ["rag_v01"]
+
+[tool.pytest.ini_options]
+# 这里以前有一条 pythonpath = ["src/new_module"] —— rag_v01 进 hatch packages 后不再需要:
+# `uv sync` 的 editable 安装已把 src/ 挂进 sys.path, 任意 cwd 下都能 `from rag_v01... import`。
+
 [tool.ruff.lint.per-file-ignores]
 # CLI/API 入口需要先 reconfigure stdout 为 UTF-8(Windows GBK 坑),import 因此被推迟
 "src/cli/*.py" = ["E402"]
 "src/api/*.py" = ["E402", "B008"]  # B008:FastAPI 惯用 `= File(...)` 参数默认值,非缺陷
 "src/tools/rag/cli.py" = ["E402"]
+"src/rag_v01/cli.py" = ["E402"]  # 同上: rag_v01 的入口也得先 reconfigure stdout

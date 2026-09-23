@@ -47,7 +47,7 @@ def test_ask_interrupt_then_resume_roundtrip():
     list(graph.stream({"messages": [("user", "帮我查天气")]}, config, stream_mode="updates"))
     st = graph.get_state(config)
     assert st.next  # 图挂起,有未完成节点
-    assert st.interrupts and st.interrupts[0].value["question"] == "请告诉我城市?"
+    assert st.interrupts and st.interrupts[0].value == {"kind": "ask", "text": "请告诉我城市?"}
 
     # 第二轮:resume 恢复,答案作为 user message 进消息流,继续到 answer
     list(graph.stream(Command(resume="北京"), config, stream_mode="updates"))
@@ -65,7 +65,7 @@ def test_run_turn_interrupt_returns_none_and_callback():
     seen = []
     result = run_turn(graph, config, "帮我查天气", on_interrupt=lambda intrs: seen.append(intrs))
     assert result is None  # 挂起:无最终消息
-    assert seen and seen[0][0].value["question"] == "请告诉我城市?"
+    assert seen and seen[0][0].value == {"kind": "ask", "text": "请告诉我城市?"}
 
     # resume 恢复:最终返回 AIMessage
     final = run_turn(graph, config, resume="北京")

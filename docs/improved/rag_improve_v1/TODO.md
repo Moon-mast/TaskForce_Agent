@@ -1,3 +1,5 @@
+> **【已下线 · 2026-09-23】** 本文属历史方案(docs/improved/rag_improve_v1,旧 pgvector 内核的 BM25 改造),整套已随内核换轨废弃,勿按其实施;现行唯一口径见 [rag_0.1/00-总览.md](../../new_module/rag_0.1/00-总览.md)。
+
 # rag_improve_v1 · RAG 混合检索改造(BM25 + 向量 · 方案 A)
 
 > 一句话:纯 pgvector → 双路召回(BM25 关键词路 + 向量路)+ RRF 融合,改造全封闭在 `RAGStore` 内。

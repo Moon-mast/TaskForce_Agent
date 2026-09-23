@@ -9,7 +9,7 @@
 使用位置:
     - agent/build.py:make_llm 取 LLM 配置;
     - settings/usage.py:UsageTracker 取计费单价;
-    - settings/db/checkpointer.py、tools/rag/store.py、tools/rag/embed.py:
+    - settings/db/checkpointer.py、tools/rag_0.1/store.py、tools/rag_0.1/embed.py:
       取 database_url / embedding 配置;
     - cli/repl.py:进程入口取全局配置。
 """
@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     database_url: str
     sandbox_url: str = ""
     sandbox_api_key: str = ""
+    # 腾讯云 Agent Runtime(沙箱经 E2B SDK 接入):字段名即环境变量名。
+    # client 运行时把它们回注 os.environ——pydantic 的 env_file 不写进程环境,
+    # 而 SDK 从环境变量读配置,需手动桥接
+    e2b_api_key: str = ""
+    e2b_domain: str = ""
+    ags_template: str = ""
     anysearch_api_key: str = ""  # 搜索 API 可选;留空走匿名调用(按 IP 限流)
     log_level: str = "INFO"
 

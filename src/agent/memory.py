@@ -19,6 +19,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.types import interrupt
 from pydantic import BaseModel, ValidationError
 
+from agent.contracts import PREFIX_SUBAGENT_RESULT, memory_payload
 from agent.memory_ctx import store_memory
 from agent.state import AgentState
 from settings.loader import load_prompt
@@ -32,9 +33,9 @@ class MemoryProposal(BaseModel):
 
 
 def _last_user_text(state: AgentState) -> str:
-    """取最后一条真实用户消息(显式写入的输入),跳过"子智能体结果已回收"等内部消息。"""
+    """取最后一条真实用户消息(显式写入的输入),跳过子结果合成消息(前缀常量, c5)。"""
     for m in reversed(state["messages"]):
-        if isinstance(m, HumanMessage) and not m.content.startswith("子智能体结果已回收"):
+        if isinstance(m, HumanMessage) and not m.content.startswith(PREFIX_SUBAGENT_RESULT):
             return m.content or ""
     return ""
 
@@ -64,7 +65,7 @@ def _propose(llm, user_text: str) -> tuple[MemoryProposal, dict | None]:
 def memory_node(state: AgentState, llm) -> dict:
     """记忆写入双分支(ADR-0008 单一挂起点):
     显式(用户说"记住X")→ 直接写,source=explicit,不 interrupt(T3);
-    自主提案(用户透露值得记的事实)→ interrupt({"proposal": ...}) 挂起等确认,
+    自主提案(用户透露值得记的事实)→ interrupt(memory_payload(...)) 挂起等确认,
     /confirm yes → 写入 source=confirmed;/confirm no → 跳过(T5)。
     """
     user_text = _last_user_text(state)
@@ -80,7 +81,7 @@ def memory_node(state: AgentState, llm) -> dict:
     content = (proposal.content or "").strip()
     if not content:
         return {"messages": [AIMessage(content="本轮没有值得记住的信息")]}
-    approved = interrupt({"proposal": content})
+    approved = interrupt(memory_payload(content))
     if approved:
         store_memory.invoke({"content": content, "source": "confirmed"})
         return {"messages": [AIMessage(content=f"已记住:{content}", usage_metadata=usage)]}

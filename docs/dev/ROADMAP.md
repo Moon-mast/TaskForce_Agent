@@ -86,12 +86,15 @@ flowchart TD
 | `Route` / `Task`(结构化路由 schema) | 03 | `agent/contracts/route.py` | 03 |
 | `TaskContract`(任务契约四件套类型) | 03 | `agent/contracts/task_contract.py` | 03(构造)、05/09/10(消费) |
 | `ResultSummary`(结果摘要 schema) | 03 | `agent/contracts/summary.py` | 03(answer 读/清)、05/09/10(写) |
+| interrupt 载荷与合成消息前缀(`ask_payload`/`classify_interrupt`/`PREFIX_*`) | 03→contracts | `agent/contracts/interrupt_payload.py`(2026-09-23 c5 新增,见 §7) | 06(ask/memory 节点)、11(/chat)、cli/repl、service.AUTO_NOTICE |
 | `build_contract()`(会话 -> 契约的纯函数) | 03 | `agent/supervisor.py` | 03 内部(dispatch) |
 | `load_prompt(name, **slots)`(md 提示词加载与渲染) | 03 | `settings/loader.py` | 03+、05、06、09、10 |
-| RAG 检索接口(`search/upload/delete/list_docs`) | 04 | `tools/rag/store.py` | 05(retriever 子图)、11(/knowledge) |
-| `kb_search(query, top_k=5)` 检索工具(去重+截断内聚) | R | `tools/rag/kb_search.py` | 05(retriever) |
+| RAG 内核接口(检索 `ingest/search` + 管理 `list_docs/upload/delete_doc`,全走 facade) | 04→**rag_v01** | `src/rag_v01/__init__.py`(管理面 2026-09-23 收编,见 §7)/ `src/rag_v01/store.py` | 05(retriever 子图)、11(/knowledge)、cli `/kb`(2026-09-22 换内核, 见 §7) |
+| `kb_search(query, top_k=5)` 检索工具(去重+截断内聚;工厂 `make_kb_search` 注入 seam,2026-09-23 c6) | R | `tools/rag/kb_search.py`(适配 `rag_v01`) | 05(retriever) |
 | `build_react_subgraph(...)`(ReAct 循环共享骨架) | R | `agent/subagents/react.py` | 05, 09, 10 |
+| 子图装配注册表(`get_subgraph(llm, agent)` / `BUILDERS`) | 03/10→subagents | `agent/subagents/registry.py`(2026-09-23 c7 新增,见 §7) | build.py(直挂)、tasks.py(后台 invoke) |
 | 长期记忆 Store 工厂(PG + pgvector) | 06 | `settings/db/store.py` | 06、11 |
+| 长期记忆管理查询(`list_memories`/`delete_memory` + `MEMORY_NS` 单一出处) | 06→memory_ctx | `agent/memory_ctx.py`(2026-09-23 c4 收编,见 §7) | 11(/memory)、cli `/memory` |
 | `SkillRegistry`(Skill 注册/渐进加载) | 07 | `tools/skills/loader.py` | 03(元数据注入)、09(executor) |
 | MCP 工具提供器(索引常驻 + 按需详情 + 降级) | 08 | `tools/mcp/client.py` | 09(executor) |
 | 沙箱工具组(`execute_python(code, timeout)` / `write_file` / `read_file` / `list_files`) | 09 | `tools/sandbox/client.py` | 09(executor)、`tools/tool/files.py` |
@@ -119,6 +122,18 @@ flowchart TD
 | 2026-09-16 | chat 路由只读增量(前端支持 B1/B2) | 新增两个只读端点,不改既有契约:① `GET /chat/threads/{thread_id}/messages` 历史消息回填(graph.get_state 读 messages,过滤 `[用户回答]:`/`子智能体结果已回收` 内部合成消息,附 `pending_interrupt` 挂起信封);② `GET /chat/threads/meta` 会话元数据(settings/db/checkpointer.py 新增 `list_session_meta` 纯 SQL 聚合,max(checkpoint_id) 降序,不反序列化 checkpoint;`list_session_ids` 不动,REPL 零影响) | 11/前端12 | ✅ 已落地(tests/test_api_history.py) |
 | 2026-09-16 | chat SSE interrupt 帧形状(B3,前端支持) | **数组 → 对象信封**(API 层帧变更,非 agent 契约):`{"interrupt": [{question\|proposal}]}` → `{"interrupt": {kind: "ask"\|"memory"\|"unknown", text}}`(`_interrupt_envelope`);配套 `/chat/confirm`、`/chat/answer` 加 `_require_interrupt` 挂起类型校验(不符 400——原先只查非空不查类型,判错会把 approved=True 当答案静默写进对话)。前端(dev/front)按 kind 选恢复端点;REPL 不经 `_sse_run` 零影响 | 11/前端12 | ✅ 已落地(test_api_history.py 14 用例 + test_api.py 同步修正假图挂起类型语义) |
 | 2026-09-16 | chat SSE error 帧与真流式(B4/B5,前端支持) | ① SSE 事件流**新增 `error` 帧**:worker 异常时发 `{"error": {message, code?}}` 后正常关流;② `run_turn` 兜底消息语义扩展——recursion_limit 场景 `additional_kwargs={"taskforce_error": "recursion_limit"}` → error 帧带 `code`;③ 流式从"攒帧一次性 yield"改 worker 线程 + `queue.Queue` 边跑边推(全同步红线内);④ usage 帧仅正常轮发送(err is None);⑤ `_get_app` 双检锁 + `UsageTracker` 加锁。前端(05/07)据此做错误 UX 与加载态 | 11/前端12 | ✅ 已落地(test_api_history.py;curl 实测 token 帧逐条到达) |
+| 2026-09-22 | **知识库内核换轨:RAGStore(pgvector) → `rag_v01`(Milvus)** | 里程碑 B 步骤 1~6。① **打包**: 新模块从 `src/new_module/rag_v01/` 挪到 **`src/rag_v01/`**(与其它六包同深度并进 `hatch packages`)—— 混深度的目录进不了 editable 安装的 `.pth`, 挪之前 `import rag_v01` 运行时必失败; ② **工具契约不变**: `kb_search` 的 JSON 契约(`doc_id/filename/seq/content/score`, content 截 500, top_k 钳 1-10)与工具名都不变(`prompts/subagents/retriever.md` 写死了这个名字, 提示词是静态前缀), 适配层从 `kb_search_v2.py` 改名回 `kb_search.py`; 变的是 `content`(父块全文 + 最佳子块, 旧的是 500 字切片)与 `score`(RRF 分, 语义方向不变); ③ **API 契约三处变更**: `doc_id` 改**内容寻址**(文件字节 sha256 前 16 位, 16 hex; 同内容重复上传必然同 id → `created: false` 据此判定)、`created_at` 恒为 `null`(新内核没有文档表, 没有上传时间)、`DELETE /knowledge/{doc_id}` 对不存在的 id 由 500 改 **404**; ④ **下线**: 删 `tools/rag/{parse,split,bm25,store,kb_search,cli}.py` 与旧测试(test_rag/test_bm25/test_rag_hybrid/test_kb_search), `embed.py` **保留**(长期记忆 `settings/db/store.py` 在用, 覆盖搬到 `tests/test_rag_embed.py`); ⑤ 消费方 `agent/subagents/retriever.py`、`api/routers/knowledge.py`、`cli/commands/knowledge.py` 同批切换 | 04/05/11/cli + 前端契约 | ✅ 已落地(主线 400 passed / 2 failed 全是远程沙箱不可达; rag_v01 203 passed; ruff 干净) |
+
+| 2026-09-23 | embedding 客户端归属 + `get_store` 签名(架构整理 c2) | `tools/rag/embed.py` **整体下沉为 `settings/embeddings.py`**:`settings/db/store` 原反向 import `tools.rag.embed`、而后者又依赖 `settings.config`,形成 settings↔tools 包级循环,打穿"tools→settings"单向依赖(2026-09-22 登记中"embed.py 保留"一句由此替代);`get_store(database_url, embed=None)` 新增可选 embed 注入,缺省仍用 settings 版真实客户端,注入时向量维度由该函数实测(测试免真实 key);`tools/rag` 只剩 `kb_search` 适配层 | 06/11 + tests | ✅ 已同步代码 |
+
+| 2026-09-23 | `build_executor_graph` 签名(架构整理 c3) | `build_executor_graph(llm)` → `build_executor_graph(llm, tools=None)`:缺省才调 `_gather_tools()`(原 build 期调用两次 → 一次,MCP 连接发现双倍支付与"meta/bind_tools 两批可能不一致"风险一并消除);`tools` 显式注入时提示词工具索引 meta 与 bind_tools 的工具集与注入列表同源;tests/test_executor 改为注入内置工具/假工具,不再 monkeypatch 私有符号 | 03/09/11 + tests | ✅ 已同步代码 |
+| 2026-09-23 | rag_v01 管理面 + memory_ctx 管理查询(架构整理 c4) | ① facade 新增 `list_docs()`(定型条目+文件名排序)、`upload(content, filename)`(收编 20MB 上限/判重快照/带原名临时落盘/created 判定, 返回 `{ok,error,doc_id,created,name}`)、`delete_doc(doc_id)->bool`(不存在返 False, 404 文案留入口)、常量 `MAX_UPLOAD_BYTES`(自 api/routers/knowledge 下沉);② `agent/memory_ctx` 新增 `list_memories()/delete_memory()` 与 `MEMORY_NS/LIST_LIMIT`, namespace 字面量 ("memory","default") 双入口三处重复收编为单一出处;③ api/cli 的 knowledge、memory 四入口退化纯渲染(CLI 上传从此同受 20MB 上限, 消除已现漂移);HTTP 状态码与文案仍归各入口 | 11/cli + tests | ✅ 已同步代码 |
+
+| 2026-09-23 | interrupt 载荷契约 + 合成消息前缀常量(架构整理 c5) | 新增 `agent/contracts/interrupt_payload.py`:`InterruptKind`(ask/memory/unknown)、`InterruptPayload{kind,text}`、构造器 `ask_payload/memory_payload`、识别器 `classify_interrupt`(kind 优先, 兼容旧检查点 question/proposal 键名形状, 未知给 unknown 不静默);前缀常量 `PREFIX_USER_ANSWER`("[用户回答]:")/`PREFIX_SUBAGENT_RESULT`("子智能体结果已回收")/`PREFIX_SYSTEM_NOTICE`("(系统通知)")与 `SYNTHETIC_USER_PREFIXES` 收编单一出处。② ask/memory 节点按契约构造载荷(**载荷加 kind 字段**, 存量检查点经 classify 兼容不迁移);③ api/chat 三处键名探测与 cli/repl 分发改直读 kind(未知挂起不再静默落入问询, 显式告警);④ 前缀字面值不变(提示词引用与存量消息零影响), `service.AUTO_NOTICE` 改由前缀常量拼接 | 03/06/11/cli + tests | ✅ 已同步代码 |
+
+| 2026-09-23 | kb_search 工厂 seam + retriever 注入签名(架构整理 c6) | ① `kb_search` 由模块级单例改为工厂 `make_kb_search(search_backend=None)`(缺省后端 `_default_search` 仍惰性转调 rag_v01.search;**工具名与 ToolMessage JSON 五键契约不变**);② 新增 `hit_key(item)`,`(doc_id, seq)` 去重键定义与 seq 提取同居 `tools/rag/kb_search.py`(`_collect_hits` 改调 hit_key);③ `build_retriever_graph(llm, search_backend=None)` 显式注入后端;tests 改为工厂注入假件, 删除 test_retriever 裸赋值 + autouse 还原 hack(实测假件泄漏事故就此根除) | 05/11 + tests | ✅ 已同步代码 |
+
+| 2026-09-23 | 子图装配唯一出处(架构整理 c7) | 新增 `agent/subagents/registry.py`:`BUILDERS` + `get_subgraph(llm, agent)`(按 llm 强引用缓存、按 agent 惰性编译, 同 llm 同 agent 只编译一次);`build_graph` 直挂与 `TaskManager._subgraph` 后台 invoke 经注册表取**同一批**实例, 消除双份装配与双倍 MCP 发现冷启动;`tasks._BUILDERS` 模块字典并入 registry;Send 备胎通道与 ADR-0009 双通道语义不变;TaskManager 懒构建语义保留(未派发的 agent 仍不编译) | 03/10/11 + tests | ✅ 已同步代码 |
 
 ## 8. 开发原则(硬性)
 

@@ -94,7 +94,7 @@ function errText(payload, fallback = '请求失败') {
 | 422 | 请求体 schema 不符;`/mcp/servers` 配置 discriminator 解析失败(后端显式抛 422);B8 落地后 MCP name 非法 | 表单字段级报错 |
 | 500 | 未捕获异常(如 RAGStore 删除不存在的 doc_id 会抛 `ValueError`,**B7 落地前会变 500**) | 通用错误提示 |
 
-> **已知缺口(B 落地前)**:`DELETE /knowledge/{doc_id}` 删除不存在的文档时,`RAGStore().delete()` 抛 `ValueError(f"文档不存在:{doc_id}")`,router 未捕获,前端收到 500 而非 404。前端过渡处理:删除前不做存在性校验,把 500 也当作"该文档可能已不存在"提示并刷新列表。
+> **已知缺口(已闭合,2026-09-22)**:`DELETE /knowledge/{doc_id}` 删不存在的文档曾返回 500(旧 `RAGStore.delete()` 抛 `ValueError` 而 router 未捕获)。**换内核(rag_v01)时一并修掉**:改为路由先查存在性,不存在直接 404 —— 前端的过渡处理可撤,按 404 走正式分支。
 
 ### 1.4 请求/响应通用约定
 
@@ -299,7 +299,7 @@ DB 异常(注意 `db` 内嵌了完整异常文本):`{ "status": "degraded", "db"
 
 ### 2.3 Knowledge 资源
 
-#### `GET /knowledge` — 文档列表(按 `created_at` 升序)
+#### `GET /knowledge` — 文档列表(按 `filename` 升序)
 
 ```json
 {
@@ -311,9 +311,9 @@ DB 异常(注意 `db` 内嵌了完整异常文本):`{ "status": "degraded", "db"
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `doc_id` | `string` | 32 位 hex(`uuid4().hex`) |
-| `filename` | `string` | 上传时的原始文件名 |
-| `created_at` | `string` | ISO 8601,带时区偏移 |
+| `doc_id` | `string` | 16 位 hex —— **内容寻址**: 文件字节 sha256 的前 16 位(2026-09-22 换内核前是 32 位 `uuid4().hex`) |
+| `filename` | `string` | 入库时的原始文件名 |
+| `created_at` | `null` | **恒为 null**: 新内核(Milvus)没有文档表, 没有『上传时间』这个概念; 前端 `fmtDateTime` 对 null 返回空串, 该列留空即可 |
 | `chunks` | `number` | 该文档切块数 |
 
 #### `POST /knowledge/upload` — 上传文档
@@ -332,15 +332,14 @@ await fetch(`${BASE}/knowledge/upload`, { method: 'POST', body: fd })
 { "doc_id": "3f2a9c1b…", "created": true, "name": "LangGraph 官方指南.pdf" }
 ```
 
-**前端必须处理 `created: false`**:不是错误,是内容判重命中(解析后文本 SHA-256 相同),UI 提示"该文档已存在,已复用"。
+**前端必须处理 `created: false`**:不是错误,是内容判重命中(文件字节 sha256 相同 → 同一个 `doc_id`),UI 提示『该文档已存在,已复用』。
 
 错误码:
 
 | 码 | 条件 | detail 原文 |
 |---|---|---|
 | 400 | `len(content) > 20MB` | `文件超过 20MB 上限` |
-| 400 | 解析失败/切块后无内容(B7 落地后;落地前为 500) | 异常原文 |
-| 500 | 同上(B7 落地前) | — |
+| 400 | 解析失败/切块后无内容(2026-09-22 换内核后已是此行为) | 异常原文 |
 
 前端应在发起请求前用 `file.size > 20 * 1024 * 1024` 本地拦截。
 
@@ -348,7 +347,7 @@ await fetch(`${BASE}/knowledge/upload`, { method: 'POST', body: fd })
 
 成功:`{ "ok": true, "doc_id": "3f2a9c1b…" }`
 
-错误码:B7 落地后不存在返 404(`文档不存在:{doc_id}`);落地前为 500,前端按 §1.3 过渡处理。
+错误码:**不存在返 404**(`文档不存在: {doc_id}`)—— 2026-09-22 换内核时落地,§1.3 的过渡处理可以撤掉了。
 
 ### 2.4 Memory 资源
 

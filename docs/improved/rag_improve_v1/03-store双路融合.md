@@ -1,3 +1,5 @@
+> **【已下线 · 2026-09-23】** 本文属历史方案(docs/improved/rag_improve_v1,旧 pgvector 内核的 BM25 改造),整套已随内核换轨废弃,勿按其实施;现行唯一口径见 [rag_0.1/00-总览.md](../../new_module/rag_0.1/00-总览.md)。
+
 # 模块 03 · store.py 双路融合改造
 
 > 状态:✅ 已完成(2026-09-14 验收:29 passed = bm25 12 + rag 17 真实库 roundtrip,ruff 全绿)
@@ -28,8 +30,8 @@
 
 ```bash
 uv run pytest tests/test_rag.py -q          # 全绿(旧用例 + 本模块不改动时先回归)
-uv run python -m tools.rag.cli search "关键词"   # 命中正常,score 为融合值(越大越相关)
-uv run ruff check src/tools/rag/store.py
+uv run python -m tools.rag_0.1.cli search "关键词"   # 命中正常,score 为融合值(越大越相关)
+uv run ruff check src/tools/rag_0.1/store.py
 ```
 
 > 说明:新增混合命中/脏重建用例在模块 05 统一补,本模块先保证行为不回归。

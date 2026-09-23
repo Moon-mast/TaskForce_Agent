@@ -2,13 +2,15 @@
 
 架构评审(ARCH-REVIEW / ADR-0011)落地:
 - agents.md:构建期读入并 lru_cache 缓存(字节级稳定,进固定 system),不再每轮读盘;
-- 长期记忆:封装为 memory_search / store_memory 两个 @tool(同 tools/rag/kb_search 模式),
+- 长期记忆:封装为 memory_search / store_memory 两个 @tool(同 tools/rag_0.1/kb_search 模式),
   由主智能体(answer 侧)判断需要时按需调用,结果以 ToolMessage 进消息流;
   废除"每轮无条件向量检索 top-5 注入 system"的旧机制(缓存破坏 + 上下文漂移 + 无法按需检索)。
 
 使用位置:
     - agent/supervisor.py:route_node 装配固定 system(仅 agents_md);
     - agent/answer.py:answer_node 装配固定 system + bind_tools 记忆工具循环;
+    - api/routers/memory.py 与 cli/commands/memory.py:管理查询 list_memories/delete_memory
+      (2026-09-23 架构整理 c4 收编, 双入口纯渲染, 见 ROADMAP §7);
     - tests/test_memory_inject.py:工具行为与 answer 循环测试(monkeypatch _default_store)。
 """
 import json
@@ -22,7 +24,10 @@ from langchain_core.tools import tool
 from settings.config import get_settings
 from settings.db.store import get_store
 
-USER_ID = "default"  # 单用户工作台:记忆 namespace ("memory", USER_ID)
+USER_ID = "default"  # 单用户工作台
+
+MEMORY_NS = ("memory", USER_ID)  # 记忆 namespace 单一出处:工具与 /memory 双入口共用(c4)
+LIST_LIMIT = 100  # 管理面列表上限(API /memory 与 REPL /memory list 同值)
 
 
 @lru_cache(maxsize=1)
@@ -51,7 +56,7 @@ def memory_search(query: str, top_k: int = 5) -> str:
     """
     top_k = min(max(int(top_k or 5), 1), 10)
     try:
-        hits = _default_store().search(("memory", USER_ID), query=query, limit=top_k)
+        hits = _default_store().search(MEMORY_NS, query=query, limit=top_k)
     except Exception as e:
         return f"记忆检索不可用:{e}"
     if not hits:
@@ -80,7 +85,7 @@ def store_memory(content: str, source: str = "explicit") -> str:
     """
     try:
         _default_store().put(
-            ("memory", USER_ID),
+            MEMORY_NS,
             f"m_{uuid.uuid4().hex[:8]}",
             {
                 "content": content,
@@ -91,6 +96,27 @@ def store_memory(content: str, source: str = "explicit") -> str:
     except Exception as e:
         return f"记忆写入失败:{e}"
     return f"已记住:{content}"
+
+
+def list_memories() -> list[dict]:
+    """管理面记忆列表:MEMORY_NS 全量(上限 LIST_LIMIT)按 created_at 倒序,
+    定型条目 `[{key, content, source, created_at}]`。API /memory 与 REPL /memory list 共用(c4)。"""
+    items = _default_store().search(MEMORY_NS, query=None, limit=LIST_LIMIT)
+    items = sorted(items, key=lambda it: it.value.get("created_at", ""), reverse=True)
+    return [
+        {
+            "key": it.key,
+            "content": it.value.get("content", ""),
+            "source": it.value.get("source", ""),
+            "created_at": it.value.get("created_at", ""),
+        }
+        for it in items
+    ]
+
+
+def delete_memory(key: str) -> None:
+    """删除一条长期记忆(MEMORY_NS);键不存在也静默成功(store.delete 幂等)。双入口共用(c4)。"""
+    _default_store().delete(MEMORY_NS, key)
 
 
 MEMORY_TOOLS = [memory_search, store_memory]

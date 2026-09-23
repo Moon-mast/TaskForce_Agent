@@ -17,9 +17,7 @@ from agent.answer import answer_node
 from agent.ask import ask_node
 from agent.memory import memory_node
 from agent.state import AgentState
-from agent.subagents.executor import build_executor_graph
-from agent.subagents.research import build_research_graph
-from agent.subagents.retriever import build_retriever_graph
+from agent.subagents.registry import get_subgraph
 from agent.supervisor import route_node
 from agent.tasks import TaskManager
 from settings.config import get_settings
@@ -46,11 +44,12 @@ def make_llm(settings=None) -> ChatOpenAI:
 
 
 def build_graph(llm, checkpointer=None, tasks=None):
-    """CLI 与 API 共用的唯一构建入口;三个子图编译后直挂 add_node。
+    """CLI 与 API 共用的唯一构建入口;三个子图经共享注册表装配后直挂 add_node
+    (c7:与 TaskManager 后台 invoke 取同一批编译实例,不再双份装配)。
 
     异步派发(方案 A):TaskManager 随图构建(测试可注入 fake),supervisor 的
     dispatch 分支提交后台任务、结果经 supervisor 每轮回收注入(主图同步 Send
-    通道在 tasks=None 时保留为备胎)。
+    通道保留为备胎,ADR-0009 双通道语义不变)。
     """
     b = StateGraph(state_schema=AgentState)
     tasks = tasks or TaskManager(llm)
@@ -58,9 +57,9 @@ def build_graph(llm, checkpointer=None, tasks=None):
     b.add_node("answer", lambda s: answer_node(s, llm))
     b.add_node("ask", ask_node)
     b.add_node("memory", lambda s: memory_node(s, llm))
-    b.add_node("retriever",build_retriever_graph(llm) )
-    b.add_node("research", build_research_graph(llm))
-    b.add_node("executor", build_executor_graph(llm))
+    b.add_node("retriever", get_subgraph(llm, "retriever"))
+    b.add_node("research", get_subgraph(llm, "research"))
+    b.add_node("executor", get_subgraph(llm, "executor"))
 
     b.add_edge(START, "supervisor")
     # fan-in:子图完成后回 supervisor 重新路由

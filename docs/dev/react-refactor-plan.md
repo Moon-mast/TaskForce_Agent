@@ -1,5 +1,7 @@
 # 模块 R:子智能体 ReAct 化改造计划(最高优先级,插队执行)
 
+> ⚠️ **2026-09-22**: 本文档里的 `kb_search` 与 RAGStore 相关描述中,**RAGStore(pgvector)已下线**,`kb_search` 仍在但内核换成 `rag_v01`(Milvus);工具名与 JSON 契约不变,见 [ROADMAP §7](../ROADMAP.md) 的 2026-09-22 条目。
+
 > 状态:计划定稿(2026-09-04),经三代理组(提示词重设计 / ReAct 主流调研 / 差距分析)讨论产出 | 决策记录:[ADR-0010](../adr/0010-react-subagents.md)
 > 一句话:三个子智能体统一为 ReAct 工具循环(手写循环 + 共享骨架),supervisor 保持结构化路由;05 已实现的管线版 retriever 作废重写,10 设计先行修正。
 

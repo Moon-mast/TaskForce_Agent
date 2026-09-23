@@ -1,6 +1,11 @@
 # 04-RAG 模块开发文档:RAG 内核 + 知识库管理
 
 > 状态:见 [ROADMAP.md](../ROADMAP.md) | 代码目录:`tools/rag/`
+>
+> ⚠️ **2026-09-22 已换内核(里程碑 B 步骤 6)**:本文档记录的 `parse/split/bm25/store/cli` 与 pgvector 实现
+> **全部下线**,知识库内核改为 `src/rag_v01/`(docling 解析 + 父子分块 + Milvus 双路 RRF),方案见
+> `docs/new_module/rag_0.1/`,契约级变更见 [ROADMAP §7](../ROADMAP.md) 的 2026-09-22 条目。
+> 保留下来的只有 `tools/rag/embed.py`(长期记忆在用)。本文档作为**历史记录**保留,不再作为现行实现依据。
 > 一句话:做完本模块,知识库子系统独立可用--上传 TXT/MD/Word/PDF,切块向量化入库,top-5 检索命中正确。(支线:可与 01-03 并行)
 
 ## 1. 目标与范围

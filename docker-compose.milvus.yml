@@ -1,0 +1,78 @@
+# Milvus standalone(etcd + minio + standalone)——rag_0.1 用
+# 用法(WSL 内,与 postgres 那套 compose 相互独立):
+#   mkdir -p ~/milvus && cp /mnt/f/project/my_pro_3/docker-compose.milvus.yml ~/milvus/ \
+#     && cd ~/milvus && docker compose -f docker-compose.milvus.yml up -d
+# 数据卷落在 compose 文件所在目录的 ./volumes(WSL ext4,不要放 /mnt)
+# 客户端端口 19530 暴露给宿主:Windows 侧 http://localhost:19530
+services:
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.18
+    restart: unless-stopped
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ./volumes/etcd:/etcd-data
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd-data
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: milvus-minio
+    # Docker Hub 上的 minio/minio 已取不到 tag(镜像已下架),改走 quay.io
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - ./volumes/minio:/minio_data
+    command: minio server /minio_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  standalone:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.6.0
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - ./volumes/milvus:/var/lib/milvus
+    ports:
+      - "19530:19530"    # pymilvus 客户端端口
+      - "9091:9091"      # healthz / metrics
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 5
+    depends_on:
+      - etcd
+      - minio
+
+  # 可选:Web 可视化(Windows 侧 http://localhost:3000)
+  # attu:
+  #   container_name: milvus-attu
+  #   image: zilliz/attu:latest
+  #   restart: unless-stopped
+  #   environment:
+  #     MILVUS_URL: milvus-standalone:19530
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - standalone

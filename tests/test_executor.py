@@ -4,11 +4,22 @@
 真沙箱冒烟在 test_sandbox.py(隧道依赖),此处聚焦子图行为与 warnings 纪律。
 """
 
+from types import SimpleNamespace
+
 from langchain_core.messages import AIMessage
 
 import agent.subagents.executor as ex
 from agent.contracts import SubgraphContract
-from agent.subagents.executor import _gather_tools, build_executor_graph
+from agent.subagents.executor import (
+    _gather_tools,
+    build_executor_graph,
+    execute_python,
+    get_tool_detail,
+    load_skill,
+)
+from tools.tool.files import list_files, read_file, write_file
+
+_BUILTIN = [read_file, write_file, list_files, execute_python, load_skill, get_tool_detail]
 
 
 def _call(name, args, cid="c1"):
@@ -64,8 +75,7 @@ class FakeEmptyMCP:
 
 
 def _setup(monkeypatch, sandbox_results=None):
-    """统一 stub:MCP 空 + 沙箱底层按脚本返回。返回 (calls, run_results)。"""
-    monkeypatch.setattr(ex, "MCPToolProvider", FakeEmptyMCP)
+    """统一 stub:沙箱底层按脚本返回(工具列表由测试显式注入, c3)。返回 (calls, run_results)。"""
     calls: list[tuple] = []
 
     def fake_execute(code, timeout=60):
@@ -95,7 +105,7 @@ def test_success_flow_tool_calls_then_finish(monkeypatch):
         ]),
         AIMessage("统计完成,总额 2"),
     ])
-    final = build_executor_graph(llm).invoke({"contract": _contract()})
+    final = build_executor_graph(llm, tools=_BUILTIN).invoke({"contract": _contract()})
     (summary,) = final["subagent_results"]
     assert summary.agent == "executor"
     assert summary.status == "success"
@@ -108,7 +118,7 @@ def test_prose_fallback_no_effects(monkeypatch):
     """纯收尾无工具调用:status success,warnings 为空(无执行效应)。"""
     _setup(monkeypatch)
     llm = FakeReActLLM(rounds=[])
-    final = build_executor_graph(llm).invoke({"contract": _contract()})
+    final = build_executor_graph(llm, tools=_BUILTIN).invoke({"contract": _contract()})
     (summary,) = final["subagent_results"]
     assert summary.status == "success"
     assert summary.warnings == []
@@ -117,7 +127,9 @@ def test_prose_fallback_no_effects(monkeypatch):
 def test_partial_when_iteration_limit(monkeypatch):
     """永远想调工具:12 轮上限掐断为 partial,warnings 含上限提示 + 效应。"""
     _setup(monkeypatch)
-    final = build_executor_graph(FakeAlwaysToolLLM()).invoke({"contract": _contract()})
+    final = build_executor_graph(FakeAlwaysToolLLM(), tools=_BUILTIN).invoke(
+        {"contract": _contract()}
+    )
     (summary,) = final["subagent_results"]
     assert summary.status == "partial"
     assert any("上限" in w for w in summary.warnings)
@@ -139,3 +151,45 @@ def test_tool_layer_uses_sandbox_client(monkeypatch):
 
     out = write_file.invoke({"filename": "t.txt", "content": "x"})
     assert "'path': 't.txt'" in out
+
+
+def test_injected_tools_single_source_for_meta_and_bind(monkeypatch):
+    """c3:注入 tools 时 _gather_tools 不被调,meta 与 bind_tools 与注入列表同源。"""
+    fake = [SimpleNamespace(name="fake_tool", description="假工具描述")]
+
+    def _boom():
+        raise AssertionError("_gather_tools 不应在注入 tools 时被调")
+
+    monkeypatch.setattr(ex, "_gather_tools", _boom)
+    slots: dict = {}
+
+    def fake_load_prompt(name, **kw):
+        slots[name] = kw
+        return "P"
+
+    monkeypatch.setattr(ex, "load_prompt", fake_load_prompt)
+    captured: dict = {}
+
+    class CapLLM(FakeReActLLM):
+        def bind_tools(self, tools):
+            captured["tools"] = tools
+            return self
+
+    build_executor_graph(CapLLM(rounds=[]), tools=fake).invoke({"contract": _contract()})
+    assert captured["tools"] == fake
+    assert "fake_tool" in slots["subagents/executor"]["tools_meta"]
+
+
+def test_default_path_gathers_tools_exactly_once(monkeypatch):
+    """c3:缺省路径 _gather_tools 只调一次(回归锁:原实现调两次,双倍 MCP 发现)。"""
+    monkeypatch.setattr(ex, "MCPToolProvider", FakeEmptyMCP)
+    n = {"c": 0}
+    orig = ex._gather_tools
+
+    def counting():
+        n["c"] += 1
+        return orig()
+
+    monkeypatch.setattr(ex, "_gather_tools", counting)
+    build_executor_graph(FakeReActLLM(rounds=[])).invoke({"contract": _contract()})
+    assert n["c"] == 1

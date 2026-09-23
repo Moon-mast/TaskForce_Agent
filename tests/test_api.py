@@ -263,26 +263,26 @@ def test_zero_token_turn_emits_final_content(monkeypatch):
 # ---------- T3: knowledge / memory / skills 路由 ----------
 
 class _FakeKB:
+    """假 rag_v01 facade(c4 收编后打桩点是三个管理入口)。
+
+    doc_id 模拟**内容寻址**:同一个文件名重复上传拿到同一个 id(于是路由能判出 created=False)。
+    """
+
     def __init__(self):
-        self.uploaded = None
+        self.sources = {"a.md": "d1"}
+        self._next = 2
+        self.uploaded_name = None
         self.deleted = None
-
-    def list_docs(self):
-        return [{"doc_id": "d1", "filename": "a.md", "chunks": 3, "created_at": "2026-09-11 12:00"}]
-
-    def upload(self, path, name):
-        self.uploaded = (str(path), name)
-        return ("d1", True)
-
-    def delete(self, doc_id):
-        self.deleted = doc_id
+        self.fail = None
 
 
 class _FakeMemoryStore:
     def __init__(self):
         self.deleted = None
+        self.last_ns = None
 
     def search(self, ns, query=None, limit=100):
+        self.last_ns = ns
         return [
             SimpleNamespace(
                 key="k1",
@@ -291,52 +291,119 @@ class _FakeMemoryStore:
         ]
 
     def delete(self, ns, key):
+        self.last_ns = ns
         self.deleted = key
 
 
-def test_knowledge_list_upload_delete(monkeypatch):
-    """GET/POST/DELETE /knowledge 复用 RAGStore;multipart 上传返回 doc_id/created。"""
-    import api.routers.knowledge as kb
+def _fake_kb(monkeypatch, fake: _FakeKB) -> _FakeKB:
+    """把 facade 的管理入口换成假内核(c4:路由只做 HTTP 映射,语义在 rag_v01)。"""
+    import rag_v01
 
-    fake = _FakeKB()
-    monkeypatch.setattr(kb, "RAGStore", lambda: fake)
+    def fake_list():
+        return [
+            {"doc_id": did, "filename": name, "chunks": 3, "created_at": None}
+            for name, did in sorted(fake.sources.items())
+        ]
+
+    def fake_upload(content, filename):
+        fake.uploaded_name = filename
+        if fake.fail:
+            return {"ok": False, "error": fake.fail, "doc_id": "",
+                    "created": False, "name": filename}
+        created = filename not in fake.sources
+        if created:
+            fake.sources[filename] = f"d{fake._next}"
+            fake._next += 1
+        return {
+            "ok": True,
+            "error": "",
+            "doc_id": fake.sources[filename],
+            "created": created,
+            "name": filename,
+        }
+
+    def fake_delete(doc_id):
+        if doc_id not in set(fake.sources.values()):
+            return False
+        fake.deleted = doc_id
+        fake.sources = {k: v for k, v in fake.sources.items() if v != doc_id}
+        return True
+
+    monkeypatch.setattr(rag_v01, "list_docs", fake_list)
+    monkeypatch.setattr(rag_v01, "upload", fake_upload)
+    monkeypatch.setattr(rag_v01, "delete_doc", fake_delete)
+    return fake
+
+
+def test_knowledge_list_upload_delete(monkeypatch):
+    """GET/POST/DELETE /knowledge 走 rag_v01;multipart 上传返回 doc_id/created。"""
+    fake = _fake_kb(monkeypatch, _FakeKB())
     client = TestClient(app)
-    assert client.get("/knowledge").json()["docs"][0]["doc_id"] == "d1"
+    docs = client.get("/knowledge").json()["docs"]
+    assert docs[0]["doc_id"] == "d1" and docs[0]["created_at"] is None  # 新内核无上传时间
+
     r = client.post(
         "/knowledge/upload",
         files={"file": ("note.md", "# 笔记内容".encode(), "text/markdown")},
     )
     assert r.status_code == 200
-    assert r.json()["doc_id"] == "d1" and r.json()["created"] is True
-    assert fake.uploaded[1] == "note.md"
-    assert client.delete("/knowledge/d1").status_code == 200
-    assert fake.deleted == "d1"
+    assert r.json()["doc_id"] == "d2" and r.json()["created"] is True
+    assert fake.uploaded_name == "note.md"  # source 取的是原名,不是临时名
+
+    # 同一文件再传一次:内容寻址 → 还是 d2,created=False(前端据此提示"已复用")
+    again = client.post(
+        "/knowledge/upload",
+        files={"file": ("note.md", "# 笔记内容".encode(), "text/markdown")},
+    )
+    assert again.json() == {"doc_id": "d2", "created": False, "name": "note.md"}
+
+    assert client.delete("/knowledge/d2").status_code == 200
+    assert fake.deleted == "d2"
 
 
-def test_knowledge_upload_too_large_rejects(monkeypatch):
-    """超过 20MB 上传上限:400 拒绝,不写临时文件不触库。"""
-    import api.routers.knowledge as kb
+def test_knowledge_delete_missing_returns_404(monkeypatch):
+    """删不存在的 doc_id 返 404(旧实现在这里返 500;契约 §1.3 说落地后应返 404)。"""
+    _fake_kb(monkeypatch, _FakeKB())
+    client = TestClient(app)
+    assert client.delete("/knowledge/没有这个").status_code == 404
 
-    monkeypatch.setattr(kb, "RAGStore", lambda: _FakeKB())
+
+def test_knowledge_upload_parse_failure_returns_400(monkeypatch):
+    """解析/入库失败:把内核给的失败原因原样当 400 文案抛回去, 不落半截状态。"""
+    fake = _fake_kb(monkeypatch, _FakeKB())
+    fake.fail = "ValueError: 解析失败"
     client = TestClient(app)
     r = client.post(
         "/knowledge/upload",
-        files={"file": ("big.md", b"x" * (kb.MAX_UPLOAD_BYTES + 1), "text/markdown")},
+        files={"file": ("bad.bin", b"\x00\x01", "application/octet-stream")},
+    )
+    assert r.status_code == 400 and "解析失败" in r.json()["detail"]
+
+
+def test_knowledge_upload_too_large_rejects():
+    """超过 20MB 上限:走**真实** facade 早返回路径 → 400(不打桩、不落临时文件、不触库)。"""
+    import rag_v01
+
+    client = TestClient(app)
+    r = client.post(
+        "/knowledge/upload",
+        files={"file": ("big.md", b"x" * (rag_v01.MAX_UPLOAD_BYTES + 1), "text/markdown")},
     )
     assert r.status_code == 400
 
 
 def test_memory_list_delete(monkeypatch):
-    """GET/DELETE /memory 复用 PostgresStore(namespace memory/default)。"""
-    import api.routers.memory as mem
+    """GET/DELETE /memory 走 memory_ctx 管理查询(namespace MEMORY_NS 单一出处, c4)。"""
+    import agent.memory_ctx as mcx
 
     fake = _FakeMemoryStore()
-    monkeypatch.setattr(mem, "get_store", lambda url: fake)
+    monkeypatch.setattr(mcx, "_default_store", lambda: fake)
     client = TestClient(app)
     items = client.get("/memory").json()["items"]
     assert items[0]["key"] == "k1" and items[0]["content"] == "用户偏好 X"
     assert client.delete("/memory/k1").status_code == 200
     assert fake.deleted == "k1"
+    assert fake.last_ns == ("memory", "default")  # namespace 不再由入口各自写死
 
 
 def test_skills_list(monkeypatch):

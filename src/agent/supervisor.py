@@ -16,7 +16,7 @@ from langgraph.graph import END
 from langgraph.types import Command, Send
 
 from agent.answer import _render_results
-from agent.contracts import Route, Task, TaskContract
+from agent.contracts import PREFIX_SUBAGENT_RESULT, Route, Task, TaskContract
 from agent.memory_ctx import load_agents_md
 from agent.state import AgentState
 from settings.loader import load_prompt
@@ -87,7 +87,7 @@ def route_node(state: AgentState, llm, tasks=None, config=None) -> Command:
             note = "\n(以上为桩子图模拟结果,未真实执行;重派不会获得新信息,请选择 answer 如实转达。)"
         messages.append(
             HumanMessage(
-                content="子智能体结果已回收:\n" + _render_results(results) + note
+                content=PREFIX_SUBAGENT_RESULT + ":\n" + _render_results(results) + note
             )
         )
     try:

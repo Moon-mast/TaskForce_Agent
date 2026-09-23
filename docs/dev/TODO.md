@@ -153,6 +153,8 @@
 
 ## 优化 01:RAG 混合检索(BM25 + 向量 · 方案 A)
 
+> ⚠️ **2026-09-22 后续状态**: 本区的产物(含 RAGStore 与整个 `tools/rag` 检索栈)**已随里程碑 B 下线** —— 知识库内核换成 `src/rag_v01/`(docling 解析 + 父子分块 + Milvus 内置 BM25 + 手写 RRF),方案与进度见 [docs/new_module/rag_0.1/TODO.md](../../new_module/rag_0.1/TODO.md),契约变更见 ROADMAP §7 的 2026-09-22 条目;本区作为历史记录保留。
+
 > 2026-09-14 起。纯 pgvector → 双路召回 + RRF 融合,改造封闭在 RAGStore 内。方案/任务/进度唯一事实源:**[docs/improved/rag_improve_v1/TODO.md](../improved/rag_improve_v1/TODO.md)**(本区仅同步状态)。
 
 - [x] 模块 01 依赖与分词(tokenize,5 passed)

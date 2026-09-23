@@ -1,0 +1,2163 @@
+{
+  "meta": {
+    "system_label": "rag_v01",
+    "testset": "F:\\project\\my_pro_3\\data\\eval_qa_v1.jsonl",
+    "testset_sha256_16": "4136f7b616bc6041",
+    "question_count": 40,
+    "ragas_version": "0.4.3",
+    "judge_model": "deepseek-flash",
+    "judge_api_base": "https://api.deepseek.com",
+    "embedding_model": "qwen3-vl-embedding",
+    "embedding_mode": "api",
+    "retrieve": {
+      "top_k": 5,
+      "candidates": 20,
+      "rrf_k": 60,
+      "hnsw_ef": 96
+    },
+    "contexts_source": "parent_text",
+    "answer_prompt_version": "v1",
+    "corpus": {
+      "doc_count": 499,
+      "children": 597
+    },
+    "nan_question_ids": [
+      "q004",
+      "q010",
+      "q015",
+      "q022",
+      "q025",
+      "q026",
+      "q038"
+    ],
+    "total_tokens": "<不可用: ValueError>"
+  },
+  "metrics": {
+    "context_precision": 0.8958,
+    "context_recall": 0.95,
+    "faithfulness": 0.9595,
+    "answer_relevancy": 0.5015
+  },
+  "per_question": [
+    {
+      "question_id": "q001",
+      "user_input": "石英表多少钱",
+      "reference": "300",
+      "response": "300。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "bd3fc2eddad90d71:p001:c001",
+          "parent_id": "bd3fc2eddad90d71:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "17b780525eaa29d7:p001:c001",
+          "parent_id": "17b780525eaa29d7:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 11,
+          "rrf_score": 0.030214
+        },
+        {
+          "chunk_id": "a2c7ddb2307f7f93:p001:c001",
+          "parent_id": "a2c7ddb2307f7f93:p001",
+          "chunk_type": "text",
+          "dense_rank": 13,
+          "sparse_rank": 2,
+          "rrf_score": 0.029828
+        },
+        {
+          "chunk_id": "e822fbe6fb612a85:p001:c001",
+          "parent_id": "e822fbe6fb612a85:p001",
+          "chunk_type": "text",
+          "dense_rank": 16,
+          "sparse_rank": 9,
+          "rrf_score": 0.027651
+        },
+        {
+          "chunk_id": "d5a91907a1ec0d5c:p001:c001",
+          "parent_id": "d5a91907a1ec0d5c:p001",
+          "chunk_type": "text",
+          "dense_rank": 15,
+          "sparse_rank": 19,
+          "rrf_score": 0.025992
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.3108
+    },
+    {
+      "question_id": "q002",
+      "user_input": "欧莱雅精华液哪个好",
+      "reference": "清润葡萄籽补水精华",
+      "response": "欧莱雅清润葡萄籽补水精华。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "2f1bb0ca10a0b139:p001:c001",
+          "parent_id": "2f1bb0ca10a0b139:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "f6acdef37cffb353:p001:c001",
+          "parent_id": "f6acdef37cffb353:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 4,
+          "rrf_score": 0.031754
+        },
+        {
+          "chunk_id": "3c0d1e0284da734f:p001:c001",
+          "parent_id": "3c0d1e0284da734f:p001",
+          "chunk_type": "text",
+          "dense_rank": 7,
+          "sparse_rank": 8,
+          "rrf_score": 0.029631
+        },
+        {
+          "chunk_id": "83b3c8894847a591:p001:c002",
+          "parent_id": "83b3c8894847a591:p001",
+          "chunk_type": "text",
+          "dense_rank": 15,
+          "sparse_rank": 2,
+          "rrf_score": 0.029462
+        },
+        {
+          "chunk_id": "bb52dc8768ebeea8:p001:c001",
+          "parent_id": "bb52dc8768ebeea8:p001",
+          "chunk_type": "text",
+          "dense_rank": 13,
+          "sparse_rank": 17,
+          "rrf_score": 0.026686
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.6585
+    },
+    {
+      "question_id": "q003",
+      "user_input": "learning curve什么意思",
+      "reference": "学习曲线",
+      "response": "学习曲线",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "fd3995c8d9cfd77a:p001:c001",
+          "parent_id": "fd3995c8d9cfd77a:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "15b4799d7e36ebba:p001:c001",
+          "parent_id": "15b4799d7e36ebba:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 13,
+          "rrf_score": 0.029324
+        },
+        {
+          "chunk_id": "7a7a9575c6ca854a:p001:c001",
+          "parent_id": "7a7a9575c6ca854a:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "fd2ee290037aa3e0:p001:c002",
+          "parent_id": "fd2ee290037aa3e0:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "09e6baf02c86c915:p001:c001",
+          "parent_id": "09e6baf02c86c915:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7306
+    },
+    {
+      "question_id": "q004",
+      "user_input": "暗黑2 存档位置",
+      "reference": "save文件夹",
+      "response": "根据资料无法回答。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "143f221f7afe3d55:p001:c001",
+          "parent_id": "143f221f7afe3d55:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "94a9815b56909b1e:p001:c001",
+          "parent_id": "94a9815b56909b1e:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 5,
+          "rrf_score": 0.031514
+        },
+        {
+          "chunk_id": "6a2c66d5a8b60b5b:p001:c001",
+          "parent_id": "6a2c66d5a8b60b5b:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 3,
+          "rrf_score": 0.031258
+        },
+        {
+          "chunk_id": "6b182627c2730482:p001:c001",
+          "parent_id": "6b182627c2730482:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "e2a5855d184418a3:p001:c001",
+          "parent_id": "e2a5855d184418a3:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": null,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q005",
+      "user_input": "日语 几号",
+      "reference": "今日は何日ですか",
+      "response": "何日",
+      "contexts_count": 3,
+      "debug": [
+        {
+          "chunk_id": "4ef3fa3bb4bc2520:p001:c001",
+          "parent_id": "4ef3fa3bb4bc2520:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 1,
+          "rrf_score": 0.032522
+        },
+        {
+          "chunk_id": "4ef3fa3bb4bc2520:p001:c002",
+          "parent_id": "4ef3fa3bb4bc2520:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 2,
+          "rrf_score": 0.032522
+        },
+        {
+          "chunk_id": "4ef3fa3bb4bc2520:p001:c003",
+          "parent_id": "4ef3fa3bb4bc2520:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "7e079130cea3f17c:p001:c001",
+          "parent_id": "7e079130cea3f17c:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": null,
+          "rrf_score": 0.015625
+        },
+        {
+          "chunk_id": "02f988386d96b77b:p001:c001",
+          "parent_id": "02f988386d96b77b:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": null,
+          "rrf_score": 0.015385
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q006",
+      "user_input": "pet-ct价格",
+      "reference": "8500左右",
+      "response": "未统一；上海全身7000元、局部4000元；全国平均约8500元。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "b33fd06c48f4df37:p001:c001",
+          "parent_id": "b33fd06c48f4df37:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 5,
+          "rrf_score": 0.031778
+        },
+        {
+          "chunk_id": "0be345f139befc20:p001:c001",
+          "parent_id": "0be345f139befc20:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 10,
+          "rrf_score": 0.030159
+        },
+        {
+          "chunk_id": "4b69e490f4d5fe7f:p001:c001",
+          "parent_id": "4b69e490f4d5fe7f:p001",
+          "chunk_type": "text",
+          "dense_rank": 18,
+          "sparse_rank": 2,
+          "rrf_score": 0.02895
+        },
+        {
+          "chunk_id": "16b82e80fa092c2f:p001:c001",
+          "parent_id": "16b82e80fa092c2f:p001",
+          "chunk_type": "text",
+          "dense_rank": 16,
+          "sparse_rank": 4,
+          "rrf_score": 0.028783
+        },
+        {
+          "chunk_id": "a6fc9f9d99517a57:p001:c001",
+          "parent_id": "a6fc9f9d99517a57:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 1,
+          "rrf_score": 0.016393
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5671
+    },
+    {
+      "question_id": "q007",
+      "user_input": "秦第一个灭掉的国家",
+      "reference": "韩国",
+      "response": "韩国",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "abc84f9941ff4901:p001:c001",
+          "parent_id": "abc84f9941ff4901:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 4,
+          "rrf_score": 0.031754
+        },
+        {
+          "chunk_id": "b18dae2887a23dfa:p001:c001",
+          "parent_id": "b18dae2887a23dfa:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 6,
+          "rrf_score": 0.031545
+        },
+        {
+          "chunk_id": "a2f37bbb7fb9872c:p001:c001",
+          "parent_id": "a2f37bbb7fb9872c:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 1,
+          "rrf_score": 0.031099
+        },
+        {
+          "chunk_id": "a2f37bbb7fb9872c:p001:c002",
+          "parent_id": "a2f37bbb7fb9872c:p001",
+          "chunk_type": "text",
+          "dense_rank": 18,
+          "sparse_rank": 2,
+          "rrf_score": 0.02895
+        },
+        {
+          "chunk_id": "02f988386d96b77b:p001:c001",
+          "parent_id": "02f988386d96b77b:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 13,
+          "rrf_score": 0.029083
+        }
+      ],
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.469
+    },
+    {
+      "question_id": "q008",
+      "user_input": "低保家庭人均年收入",
+      "reference": "2000元/人/年",
+      "response": "根据资料无法回答。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "3895348fc1d7af1c:p001:c001",
+          "parent_id": "3895348fc1d7af1c:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "6ee0a37329487d5f:p001:c002",
+          "parent_id": "6ee0a37329487d5f:p001",
+          "chunk_type": "text",
+          "dense_rank": 10,
+          "sparse_rank": 2,
+          "rrf_score": 0.030415
+        },
+        {
+          "chunk_id": "f28acd27681e8e1a:p001:c001",
+          "parent_id": "f28acd27681e8e1a:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 7,
+          "rrf_score": 0.029631
+        },
+        {
+          "chunk_id": "26dbc36e1950bb2b:p001:c001",
+          "parent_id": "26dbc36e1950bb2b:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 13,
+          "rrf_score": 0.029572
+        },
+        {
+          "chunk_id": "26dbc36e1950bb2b:p001:c002",
+          "parent_id": "26dbc36e1950bb2b:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q009",
+      "user_input": "昆山郑天如在什么药店坐诊",
+      "reference": "昆山中医院",
+      "response": "根据资料无法回答。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "0e350f5ee9ffdc0e:p001:c001",
+          "parent_id": "0e350f5ee9ffdc0e:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "bdf097a12119db80:p001:c002",
+          "parent_id": "bdf097a12119db80:p001",
+          "chunk_type": "text",
+          "dense_rank": 16,
+          "sparse_rank": 7,
+          "rrf_score": 0.028083
+        },
+        {
+          "chunk_id": "691bb35aa652cc2f:p001:c001",
+          "parent_id": "691bb35aa652cc2f:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "f1237fdbbaeac375:p001:c001",
+          "parent_id": "f1237fdbbaeac375:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "0d6fd56380ef28ec:p001:c001",
+          "parent_id": "0d6fd56380ef28ec:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q010",
+      "user_input": "波打线多宽",
+      "reference": "10-20cm左右",
+      "response": "一般在10-20cm左右，无统一标准；两条圈边线时深浅色宽度一般按2:1。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "65d1260c33f669c7:p001:c001",
+          "parent_id": "65d1260c33f669c7:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 2,
+          "rrf_score": 0.032522
+        },
+        {
+          "chunk_id": "9cebf97ff14ebd2f:p001:c002",
+          "parent_id": "9cebf97ff14ebd2f:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 10,
+          "rrf_score": 0.030415
+        },
+        {
+          "chunk_id": "f3c5b6ca1f309d81:p001:c001",
+          "parent_id": "f3c5b6ca1f309d81:p001",
+          "chunk_type": "text",
+          "dense_rank": 13,
+          "sparse_rank": 4,
+          "rrf_score": 0.029324
+        },
+        {
+          "chunk_id": "7554512046df7bff:p001:c001",
+          "parent_id": "7554512046df7bff:p001",
+          "chunk_type": "text",
+          "dense_rank": 15,
+          "sparse_rank": 11,
+          "rrf_score": 0.027418
+        },
+        {
+          "chunk_id": "febf87efde47e443:p001:c001",
+          "parent_id": "febf87efde47e443:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 1,
+          "rrf_score": 0.016393
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": null
+    },
+    {
+      "question_id": "q011",
+      "user_input": "苏有朋身高真实身高",
+      "reference": "1米69",
+      "response": "1米69",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "91af8b19e20a6a52:p001:c001",
+          "parent_id": "91af8b19e20a6a52:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "c97e8995d1959754:p001:c001",
+          "parent_id": "c97e8995d1959754:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 2,
+          "rrf_score": 0.031281
+        },
+        {
+          "chunk_id": "aa128323ac1431cd:p001:c002",
+          "parent_id": "aa128323ac1431cd:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 8,
+          "rrf_score": 0.030579
+        },
+        {
+          "chunk_id": "bbfd58102eb043ae:p001:c002",
+          "parent_id": "bbfd58102eb043ae:p001",
+          "chunk_type": "text",
+          "dense_rank": 7,
+          "sparse_rank": 6,
+          "rrf_score": 0.030077
+        },
+        {
+          "chunk_id": "715661e885b70b60:p001:c001",
+          "parent_id": "715661e885b70b60:p001",
+          "chunk_type": "text",
+          "dense_rank": 9,
+          "sparse_rank": 5,
+          "rrf_score": 0.029877
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5952
+    },
+    {
+      "question_id": "q012",
+      "user_input": "一光年是多少千米",
+      "reference": "9460730472580.8千米",
+      "response": "9 460 730 472 580.8千米",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "7ec2c308d79c70ff:p001:c001",
+          "parent_id": "7ec2c308d79c70ff:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "7ec2c308d79c70ff:p001:c002",
+          "parent_id": "7ec2c308d79c70ff:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 2,
+          "rrf_score": 0.032258
+        },
+        {
+          "chunk_id": "a2fa1000271c4c04:p001:c001",
+          "parent_id": "a2fa1000271c4c04:p001",
+          "chunk_type": "text",
+          "dense_rank": 10,
+          "sparse_rank": 3,
+          "rrf_score": 0.030159
+        },
+        {
+          "chunk_id": "d0b7b54b71b8074f:p001:c001",
+          "parent_id": "d0b7b54b71b8074f:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "a6fc9f9d99517a57:p001:c001",
+          "parent_id": "a6fc9f9d99517a57:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 4,
+          "rrf_score": 0.015625
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9008
+    },
+    {
+      "question_id": "q013",
+      "user_input": "喜爱夜蒲是什么片",
+      "reference": "香港话题电影",
+      "response": "香港话题电影",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "59c2079fb48d56a3:p001:c001",
+          "parent_id": "59c2079fb48d56a3:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "2a6dedb354a4e40e:p001:c001",
+          "parent_id": "2a6dedb354a4e40e:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "bf15209688a44f17:p001:c001",
+          "parent_id": "bf15209688a44f17:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "c10b1781c0a0403b:p001:c001",
+          "parent_id": "c10b1781c0a0403b:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 3,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "cb65789d292324fb:p001:c001",
+          "parent_id": "cb65789d292324fb:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5893
+    },
+    {
+      "question_id": "q014",
+      "user_input": "绣眉后多久可以洗眉",
+      "reference": "一个月后",
+      "response": "绣眉一个月后可以洗眉。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "33b4056aa626731b:p001:c001",
+          "parent_id": "33b4056aa626731b:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "e74635aec314f488:p001:c001",
+          "parent_id": "e74635aec314f488:p001",
+          "chunk_type": "text",
+          "dense_rank": 14,
+          "sparse_rank": 3,
+          "rrf_score": 0.029387
+        },
+        {
+          "chunk_id": "aa471e72b7c55562:p001:c001",
+          "parent_id": "aa471e72b7c55562:p001",
+          "chunk_type": "text",
+          "dense_rank": 12,
+          "sparse_rank": 5,
+          "rrf_score": 0.029274
+        },
+        {
+          "chunk_id": "59d18f895f0b08d4:p001:c001",
+          "parent_id": "59d18f895f0b08d4:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "fc4000bf9cd21786:p001:c001",
+          "parent_id": "fc4000bf9cd21786:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9967
+    },
+    {
+      "question_id": "q015",
+      "user_input": "民生银行信用卡电话号码",
+      "reference": "400-669-5568",
+      "response": "400-669-5568；95568按4。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "df135a2a7d925064:p001:c001",
+          "parent_id": "df135a2a7d925064:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "5cf6677fdae45f6a:p001:c001",
+          "parent_id": "5cf6677fdae45f6a:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 3,
+          "rrf_score": 0.031498
+        },
+        {
+          "chunk_id": "f4694f98520029fd:p001:c001",
+          "parent_id": "f4694f98520029fd:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 2,
+          "rrf_score": 0.030835
+        },
+        {
+          "chunk_id": "f4694f98520029fd:p001:c002",
+          "parent_id": "f4694f98520029fd:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 9,
+          "rrf_score": 0.030622
+        },
+        {
+          "chunk_id": "a3099fa06c1ab0ab:p001:c001",
+          "parent_id": "a3099fa06c1ab0ab:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 4,
+          "rrf_score": 0.030777
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": null,
+      "answer_relevancy": 0.5908
+    },
+    {
+      "question_id": "q016",
+      "user_input": "水痘病毒潜伏期",
+      "reference": "14天左右",
+      "response": "14天左右。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "9362877b32ddb143:p001:c001",
+          "parent_id": "9362877b32ddb143:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "f420828ea78b1d7e:p001:c001",
+          "parent_id": "f420828ea78b1d7e:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 2,
+          "rrf_score": 0.031514
+        },
+        {
+          "chunk_id": "83b3c8894847a591:p001:c002",
+          "parent_id": "83b3c8894847a591:p001",
+          "chunk_type": "text",
+          "dense_rank": 19,
+          "sparse_rank": 15,
+          "rrf_score": 0.025992
+        },
+        {
+          "chunk_id": "3df319b728a528b1:p001:c002",
+          "parent_id": "3df319b728a528b1:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "95ddc35ea2a02738:p001:c001",
+          "parent_id": "95ddc35ea2a02738:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 3,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5541
+    },
+    {
+      "question_id": "q017",
+      "user_input": "windows update要多久",
+      "reference": "无法确定",
+      "response": "无法确定。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "bd4cf627f17e9ab9:p001:c001",
+          "parent_id": "bd4cf627f17e9ab9:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "1b1fa7e3b0afce7f:p001:c001",
+          "parent_id": "1b1fa7e3b0afce7f:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 7,
+          "rrf_score": 0.03055
+        },
+        {
+          "chunk_id": "77f5c5375a60b63a:p001:c001",
+          "parent_id": "77f5c5375a60b63a:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "bdc7a4507bf52a10:p001:c001",
+          "parent_id": "bdc7a4507bf52a10:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "59459143e9329a0e:p001:c001",
+          "parent_id": "59459143e9329a0e:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q018",
+      "user_input": "蒙娜丽莎在哪个博物馆",
+      "reference": "卢浮宫",
+      "response": "巴黎卢浮宫。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "2e422925d76e2962:p001:c001",
+          "parent_id": "2e422925d76e2962:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "6da45407436d11cc:p001:c001",
+          "parent_id": "6da45407436d11cc:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "bca73b9aceb23974:p001:c001",
+          "parent_id": "bca73b9aceb23974:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "885af916e4ebfcc3:p001:c002",
+          "parent_id": "885af916e4ebfcc3:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "f1df436975f8c00e:p001:c001",
+          "parent_id": "f1df436975f8c00e:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 3,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7869
+    },
+    {
+      "question_id": "q019",
+      "user_input": "东土大唐在哪里",
+      "reference": "东方",
+      "response": "资料只说“东土大唐”是地理上的东方。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "51a0fad93e4f1118:p001:c001",
+          "parent_id": "51a0fad93e4f1118:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "c00755c364b8bc8d:p001:c002",
+          "parent_id": "c00755c364b8bc8d:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 2,
+          "rrf_score": 0.032258
+        },
+        {
+          "chunk_id": "c00755c364b8bc8d:p001:c001",
+          "parent_id": "c00755c364b8bc8d:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 8,
+          "rrf_score": 0.03009
+        },
+        {
+          "chunk_id": "061e1dcf7aa10866:p001:c003",
+          "parent_id": "061e1dcf7aa10866:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 3,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "6a2c66d5a8b60b5b:p001:c001",
+          "parent_id": "6a2c66d5a8b60b5b:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.9512
+    },
+    {
+      "question_id": "q020",
+      "user_input": "什么指甲油好用",
+      "reference": "水性",
+      "response": "水性指甲油好用；资料提到有个加拿大品牌很好，但未说明具体品牌名。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "bb52dc8768ebeea8:p001:c001",
+          "parent_id": "bb52dc8768ebeea8:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "2f1bb0ca10a0b139:p001:c001",
+          "parent_id": "2f1bb0ca10a0b139:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 2,
+          "rrf_score": 0.031281
+        },
+        {
+          "chunk_id": "c413e10f52874a12:p001:c001",
+          "parent_id": "c413e10f52874a12:p001",
+          "chunk_type": "text",
+          "dense_rank": 11,
+          "sparse_rank": 3,
+          "rrf_score": 0.029958
+        },
+        {
+          "chunk_id": "163b9bb7d3e6992d:p001:c001",
+          "parent_id": "163b9bb7d3e6992d:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 14,
+          "rrf_score": 0.028898
+        },
+        {
+          "chunk_id": "bdf097a12119db80:p001:c002",
+          "parent_id": "bdf097a12119db80:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 11,
+          "rrf_score": 0.02879
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q021",
+      "user_input": "中国历史时间最长的朝代",
+      "reference": "周朝",
+      "response": "周朝",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "abc84f9941ff4901:p001:c001",
+          "parent_id": "abc84f9941ff4901:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "21ea335bce9db78d:p001:c001",
+          "parent_id": "21ea335bce9db78d:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 3,
+          "rrf_score": 0.031258
+        },
+        {
+          "chunk_id": "d316642682cee372:p001:c001",
+          "parent_id": "d316642682cee372:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 10,
+          "rrf_score": 0.028992
+        },
+        {
+          "chunk_id": "4bc117f170e675fd:p001:c001",
+          "parent_id": "4bc117f170e675fd:p001",
+          "chunk_type": "text",
+          "dense_rank": 19,
+          "sparse_rank": 4,
+          "rrf_score": 0.028283
+        },
+        {
+          "chunk_id": "c2c5f6bc1d500d78:p001:c001",
+          "parent_id": "c2c5f6bc1d500d78:p001",
+          "chunk_type": "text",
+          "dense_rank": 18,
+          "sparse_rank": 5,
+          "rrf_score": 0.028205
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7519
+    },
+    {
+      "question_id": "q022",
+      "user_input": "军用十字弩最远射程",
+      "reference": "300米左右",
+      "response": "根据资料无法回答。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "90634b43801e2706:p001:c001",
+          "parent_id": "90634b43801e2706:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "2efb37ba6a9d5dee:p001:c002",
+          "parent_id": "2efb37ba6a9d5dee:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "f504f15532521946:p001:c001",
+          "parent_id": "f504f15532521946:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "f504f15532521946:p001:c002",
+          "parent_id": "f504f15532521946:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": null,
+          "rrf_score": 0.015385
+        },
+        {
+          "chunk_id": "a8b4f0834953919c:p001:c001",
+          "parent_id": "a8b4f0834953919c:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": null,
+          "rrf_score": 0.015625
+        }
+      ],
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": null
+    },
+    {
+      "question_id": "q023",
+      "user_input": "飞度和晶锐对比哪个性价比高",
+      "reference": "晶锐",
+      "response": "晶锐的性价比可能会更高。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "8f3301f9801476d7:p001:c001",
+          "parent_id": "8f3301f9801476d7:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "5abd7588d9e9e39c:p001:c001",
+          "parent_id": "5abd7588d9e9e39c:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 2,
+          "rrf_score": 0.031281
+        },
+        {
+          "chunk_id": "1e22fc8f006ecaaf:p001:c001",
+          "parent_id": "1e22fc8f006ecaaf:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 5,
+          "rrf_score": 0.03101
+        },
+        {
+          "chunk_id": "3350ac3940a830b6:p001:c001",
+          "parent_id": "3350ac3940a830b6:p001",
+          "chunk_type": "text",
+          "dense_rank": 10,
+          "sparse_rank": 3,
+          "rrf_score": 0.030159
+        },
+        {
+          "chunk_id": "ec523dd316b36a71:p001:c002",
+          "parent_id": "ec523dd316b36a71:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 17,
+          "rrf_score": 0.02886
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q024",
+      "user_input": "全铝衣柜多少钱一平方",
+      "reference": "1688元",
+      "response": "1688元/平方。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "48df6af4b884a00d:p001:c001",
+          "parent_id": "48df6af4b884a00d:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "a6fc9f9d99517a57:p001:c001",
+          "parent_id": "a6fc9f9d99517a57:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 4,
+          "rrf_score": 0.031754
+        },
+        {
+          "chunk_id": "a2fa1000271c4c04:p001:c001",
+          "parent_id": "a2fa1000271c4c04:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 2,
+          "rrf_score": 0.030835
+        },
+        {
+          "chunk_id": "d5a91907a1ec0d5c:p001:c001",
+          "parent_id": "d5a91907a1ec0d5c:p001",
+          "chunk_type": "text",
+          "dense_rank": 10,
+          "sparse_rank": 3,
+          "rrf_score": 0.030159
+        },
+        {
+          "chunk_id": "16b82e80fa092c2f:p001:c001",
+          "parent_id": "16b82e80fa092c2f:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 12,
+          "rrf_score": 0.029762
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7173
+    },
+    {
+      "question_id": "q025",
+      "user_input": "重庆去狐臭手术哪里好",
+      "reference": "重庆朝天门医院",
+      "response": "根据资料无法回答。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "aa471e72b7c55562:p001:c001",
+          "parent_id": "aa471e72b7c55562:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 1,
+          "rrf_score": 0.032522
+        },
+        {
+          "chunk_id": "1321cb035ff58363:p001:c001",
+          "parent_id": "1321cb035ff58363:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 3,
+          "rrf_score": 0.030579
+        },
+        {
+          "chunk_id": "0d6fd56380ef28ec:p001:c001",
+          "parent_id": "0d6fd56380ef28ec:p001",
+          "chunk_type": "text",
+          "dense_rank": 7,
+          "sparse_rank": 4,
+          "rrf_score": 0.03055
+        },
+        {
+          "chunk_id": "061e1dcf7aa10866:p001:c003",
+          "parent_id": "061e1dcf7aa10866:p001",
+          "chunk_type": "text",
+          "dense_rank": 10,
+          "sparse_rank": 2,
+          "rrf_score": 0.030415
+        },
+        {
+          "chunk_id": "9b393607597aaca2:p001:c001",
+          "parent_id": "9b393607597aaca2:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 7,
+          "rrf_score": 0.030077
+        }
+      ],
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": null
+    },
+    {
+      "question_id": "q026",
+      "user_input": "奥术大师吉格斯多少钱",
+      "reference": "6900点券",
+      "response": "根据资料无法回答。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "76e78afdbbfc0a76:p001:c001",
+          "parent_id": "76e78afdbbfc0a76:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "e822fbe6fb612a85:p001:c001",
+          "parent_id": "e822fbe6fb612a85:p001",
+          "chunk_type": "text",
+          "dense_rank": 9,
+          "sparse_rank": 10,
+          "rrf_score": 0.028778
+        },
+        {
+          "chunk_id": "acf651dbf93e921f:p001:c001",
+          "parent_id": "acf651dbf93e921f:p001",
+          "chunk_type": "text",
+          "dense_rank": 7,
+          "sparse_rank": 15,
+          "rrf_score": 0.028259
+        },
+        {
+          "chunk_id": "17b780525eaa29d7:p001:c001",
+          "parent_id": "17b780525eaa29d7:p001",
+          "chunk_type": "text",
+          "dense_rank": 13,
+          "sparse_rank": 12,
+          "rrf_score": 0.027588
+        },
+        {
+          "chunk_id": "314e740face6f51b:p001:c001",
+          "parent_id": "314e740face6f51b:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": null
+    },
+    {
+      "question_id": "q027",
+      "user_input": "给itunes充值多久到账",
+      "reference": "一个小时内",
+      "response": "一般一个小时内到账。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "c49ebbc6803186a9:p001:c001",
+          "parent_id": "c49ebbc6803186a9:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "8bae2af046774b87:p001:c002",
+          "parent_id": "8bae2af046774b87:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 3,
+          "rrf_score": 0.032002
+        },
+        {
+          "chunk_id": "8bae2af046774b87:p001:c001",
+          "parent_id": "8bae2af046774b87:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 2,
+          "rrf_score": 0.030835
+        },
+        {
+          "chunk_id": "7929731fb6202d9b:p001:c002",
+          "parent_id": "7929731fb6202d9b:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "77f5c5375a60b63a:p001:c001",
+          "parent_id": "77f5c5375a60b63a:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": null,
+          "rrf_score": 0.015625
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6848
+    },
+    {
+      "question_id": "q028",
+      "user_input": "身份证尺寸像素",
+      "reference": "240*151",
+      "response": "240×151像素",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "9cebf97ff14ebd2f:p001:c001",
+          "parent_id": "9cebf97ff14ebd2f:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "9cebf97ff14ebd2f:p001:c002",
+          "parent_id": "9cebf97ff14ebd2f:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 5,
+          "rrf_score": 0.031514
+        },
+        {
+          "chunk_id": "a3fb9ce9be85cdf1:p001:c001",
+          "parent_id": "a3fb9ce9be85cdf1:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 2,
+          "rrf_score": 0.032002
+        },
+        {
+          "chunk_id": "c5b517c93196113e:p001:c001",
+          "parent_id": "c5b517c93196113e:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 12,
+          "rrf_score": 0.029274
+        },
+        {
+          "chunk_id": "f1df436975f8c00e:p001:c001",
+          "parent_id": "f1df436975f8c00e:p001",
+          "chunk_type": "text",
+          "dense_rank": 11,
+          "sparse_rank": 6,
+          "rrf_score": 0.029236
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7444
+    },
+    {
+      "question_id": "q029",
+      "user_input": "孕期多长",
+      "reference": "280天",
+      "response": "整个孕期按280天计算，即40周。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "98ea09385d8ad8e6:p001:c001",
+          "parent_id": "98ea09385d8ad8e6:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 2,
+          "rrf_score": 0.032522
+        },
+        {
+          "chunk_id": "6de84f19bf6602ab:p001:c002",
+          "parent_id": "6de84f19bf6602ab:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 3,
+          "rrf_score": 0.030579
+        },
+        {
+          "chunk_id": "6de84f19bf6602ab:p001:c001",
+          "parent_id": "6de84f19bf6602ab:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 7,
+          "rrf_score": 0.030077
+        },
+        {
+          "chunk_id": "4d8216cbb0bc25ff:p001:c001",
+          "parent_id": "4d8216cbb0bc25ff:p001",
+          "chunk_type": "text",
+          "dense_rank": 16,
+          "sparse_rank": 1,
+          "rrf_score": 0.029551
+        },
+        {
+          "chunk_id": "7dff6c7504ebe613:p001:c001",
+          "parent_id": "7dff6c7504ebe613:p001",
+          "chunk_type": "text",
+          "dense_rank": 15,
+          "sparse_rank": 6,
+          "rrf_score": 0.028485
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8947
+    },
+    {
+      "question_id": "q030",
+      "user_input": "2017年是农历什么年",
+      "reference": "丁酉",
+      "response": "丁酉年（鸡年）。",
+      "contexts_count": 3,
+      "debug": [
+        {
+          "chunk_id": "5ca411f9d6805208:p001:c001",
+          "parent_id": "5ca411f9d6805208:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "0b09e07fc5f1b8d4:p001:c001",
+          "parent_id": "0b09e07fc5f1b8d4:p001",
+          "chunk_type": "text",
+          "dense_rank": 13,
+          "sparse_rank": 12,
+          "rrf_score": 0.027588
+        },
+        {
+          "chunk_id": "bf5b71b11bc96e98:p001:c001",
+          "parent_id": "bf5b71b11bc96e98:p001",
+          "chunk_type": "text",
+          "dense_rank": 11,
+          "sparse_rank": 17,
+          "rrf_score": 0.027072
+        },
+        {
+          "chunk_id": "bf5b71b11bc96e98:p001:c002",
+          "parent_id": "bf5b71b11bc96e98:p001",
+          "chunk_type": "text",
+          "dense_rank": 15,
+          "sparse_rank": 15,
+          "rrf_score": 0.026667
+        },
+        {
+          "chunk_id": "bf5b71b11bc96e98:p001:c003",
+          "parent_id": "bf5b71b11bc96e98:p001",
+          "chunk_type": "text",
+          "dense_rank": 16,
+          "sparse_rank": 16,
+          "rrf_score": 0.026316
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9291
+    },
+    {
+      "question_id": "q031",
+      "user_input": "steam的截图在哪个文件夹",
+      "reference": "steamapps",
+      "response": "根据资料无法回答",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "e2a5855d184418a3:p001:c001",
+          "parent_id": "e2a5855d184418a3:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "6612e6b425b72ceb:p001:c001",
+          "parent_id": "6612e6b425b72ceb:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 2,
+          "rrf_score": 0.032258
+        },
+        {
+          "chunk_id": "143f221f7afe3d55:p001:c001",
+          "parent_id": "143f221f7afe3d55:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 3,
+          "rrf_score": 0.031746
+        },
+        {
+          "chunk_id": "38acb7229a4c0881:p001:c001",
+          "parent_id": "38acb7229a4c0881:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 6,
+          "rrf_score": 0.030777
+        },
+        {
+          "chunk_id": "bd3aa95a5df19bd5:p001:c001",
+          "parent_id": "bd3aa95a5df19bd5:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 4,
+          "rrf_score": 0.030777
+        }
+      ],
+      "context_precision": 0.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q032",
+      "user_input": "梦幻多少级可以在cbg买东西",
+      "reference": "60级以上",
+      "response": "购买要求按种类不同：召唤兽≥50级，角色≥0级，游戏币≥30级，道具≥50级。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "7929731fb6202d9b:p001:c001",
+          "parent_id": "7929731fb6202d9b:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "7929731fb6202d9b:p001:c002",
+          "parent_id": "7929731fb6202d9b:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 4,
+          "rrf_score": 0.031754
+        },
+        {
+          "chunk_id": "acf651dbf93e921f:p001:c001",
+          "parent_id": "acf651dbf93e921f:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 2,
+          "rrf_score": 0.030835
+        },
+        {
+          "chunk_id": "e822fbe6fb612a85:p001:c001",
+          "parent_id": "e822fbe6fb612a85:p001",
+          "chunk_type": "text",
+          "dense_rank": 9,
+          "sparse_rank": 9,
+          "rrf_score": 0.028986
+        },
+        {
+          "chunk_id": "002704a879636d04:p001:c001",
+          "parent_id": "002704a879636d04:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 3,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6601
+    },
+    {
+      "question_id": "q033",
+      "user_input": "拍照好一点的相机",
+      "reference": "单反相机",
+      "response": "单反相机好一些。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "3c9818ad7c6323d4:p001:c001",
+          "parent_id": "3c9818ad7c6323d4:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "febf87efde47e443:p001:c001",
+          "parent_id": "febf87efde47e443:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 2,
+          "rrf_score": 0.031754
+        },
+        {
+          "chunk_id": "64b1f7342aa4b5f4:p001:c001",
+          "parent_id": "64b1f7342aa4b5f4:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 3,
+          "rrf_score": 0.031746
+        },
+        {
+          "chunk_id": "5abd7588d9e9e39c:p001:c001",
+          "parent_id": "5abd7588d9e9e39c:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "89ad359f120f8fcf:p001:c001",
+          "parent_id": "89ad359f120f8fcf:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 4,
+          "rrf_score": 0.015625
+        }
+      ],
+      "context_precision": 0.8333,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7844
+    },
+    {
+      "question_id": "q034",
+      "user_input": "闻鸡起舞的主人公",
+      "reference": "祖逖",
+      "response": "祖逖",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "b94b9154d6a4cdf4:p001:c001",
+          "parent_id": "b94b9154d6a4cdf4:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "a4d6fd998833ec14:p001:c001",
+          "parent_id": "a4d6fd998833ec14:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "d1d899519a6c0098:p001:c001",
+          "parent_id": "d1d899519a6c0098:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "aba26832f557a52a:p001:c001",
+          "parent_id": "aba26832f557a52a:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        },
+        {
+          "chunk_id": "c00755c364b8bc8d:p001:c001",
+          "parent_id": "c00755c364b8bc8d:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 3,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9329
+    },
+    {
+      "question_id": "q035",
+      "user_input": "适合做人流的时间",
+      "reference": "35-50天",
+      "response": "资料中对适合做人流的时间说法不一致：有35-50天最佳、35-60天最佳，也有最迟不超过60天或70天等说法。",
+      "contexts_count": 3,
+      "debug": [
+        {
+          "chunk_id": "421c13cca9e1dc7c:p001:c001",
+          "parent_id": "421c13cca9e1dc7c:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "5708c762d1a53cb4:p001:c001",
+          "parent_id": "5708c762d1a53cb4:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 2,
+          "rrf_score": 0.032002
+        },
+        {
+          "chunk_id": "061e1dcf7aa10866:p001:c003",
+          "parent_id": "061e1dcf7aa10866:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 4,
+          "rrf_score": 0.031754
+        },
+        {
+          "chunk_id": "061e1dcf7aa10866:p001:c002",
+          "parent_id": "061e1dcf7aa10866:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 3,
+          "rrf_score": 0.031498
+        },
+        {
+          "chunk_id": "061e1dcf7aa10866:p001:c001",
+          "parent_id": "061e1dcf7aa10866:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 5,
+          "rrf_score": 0.030769
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q036",
+      "user_input": "攻城掠地多少级升级4级兵",
+      "reference": "54级",
+      "response": "54级",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "40202f13449a2ffc:p001:c001",
+          "parent_id": "40202f13449a2ffc:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "acf651dbf93e921f:p001:c001",
+          "parent_id": "acf651dbf93e921f:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": 2,
+          "rrf_score": 0.032002
+        },
+        {
+          "chunk_id": "7929731fb6202d9b:p001:c001",
+          "parent_id": "7929731fb6202d9b:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 7,
+          "rrf_score": 0.03055
+        },
+        {
+          "chunk_id": "5897a0539ac53233:p001:c002",
+          "parent_id": "5897a0539ac53233:p001",
+          "chunk_type": "text",
+          "dense_rank": 9,
+          "sparse_rank": 4,
+          "rrf_score": 0.030118
+        },
+        {
+          "chunk_id": "5d195cf958f20b42:p001:c001",
+          "parent_id": "5d195cf958f20b42:p001",
+          "chunk_type": "text",
+          "dense_rank": 15,
+          "sparse_rank": 3,
+          "rrf_score": 0.029206
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5528
+    },
+    {
+      "question_id": "q037",
+      "user_input": "固态硬盘寿命多长",
+      "reference": "5年左右",
+      "response": "根据资料，MLC固态硬盘用5年左右不成问题；实际寿终情况尚不清楚。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "ff2a98bae8fe1d99:p001:c001",
+          "parent_id": "ff2a98bae8fe1d99:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "787ef9d52e8b2bb7:p001:c001",
+          "parent_id": "787ef9d52e8b2bb7:p001",
+          "chunk_type": "text",
+          "dense_rank": 6,
+          "sparse_rank": 3,
+          "rrf_score": 0.031025
+        },
+        {
+          "chunk_id": "eccaa75a170df6db:p001:c001",
+          "parent_id": "eccaa75a170df6db:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": 8,
+          "rrf_score": 0.030835
+        },
+        {
+          "chunk_id": "66b386aca7f8325c:p001:c001",
+          "parent_id": "66b386aca7f8325c:p001",
+          "chunk_type": "text",
+          "dense_rank": 12,
+          "sparse_rank": 2,
+          "rrf_score": 0.030018
+        },
+        {
+          "chunk_id": "3df319b728a528b1:p001:c001",
+          "parent_id": "3df319b728a528b1:p001",
+          "chunk_type": "text",
+          "dense_rank": 8,
+          "sparse_rank": 7,
+          "rrf_score": 0.029631
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q038",
+      "user_input": "二氧化锰与浓盐酸反应离子方程式",
+      "reference": "MnO2+4H++2Cl-===（加热）Mn2-+2H2O+Cl(气表)",
+      "response": "MnO2 + 4H⁺ + 2Cl⁻ =△= Mn²⁺ + Cl₂↑ + 2H₂O",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "2eabb81c7dcf2060:p001:c001",
+          "parent_id": "2eabb81c7dcf2060:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "52f36e96d68b4ed8:p001:c001",
+          "parent_id": "52f36e96d68b4ed8:p001",
+          "chunk_type": "text",
+          "dense_rank": 17,
+          "sparse_rank": 3,
+          "rrf_score": 0.02886
+        },
+        {
+          "chunk_id": "a5c30a80ceb7d39e:p001:c001",
+          "parent_id": "a5c30a80ceb7d39e:p001",
+          "chunk_type": "text",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "d9ddcccf405dd3f5:p001:c001",
+          "parent_id": "d9ddcccf405dd3f5:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        },
+        {
+          "chunk_id": "a3565a1ae1338693:p001:c001",
+          "parent_id": "a3565a1ae1338693:p001",
+          "chunk_type": "text",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": null,
+      "answer_relevancy": 0.8411
+    },
+    {
+      "question_id": "q039",
+      "user_input": "冰霜灌注吃几次",
+      "reference": "三次",
+      "response": "根据资料无法回答。",
+      "contexts_count": 5,
+      "debug": [
+        {
+          "chunk_id": "1fa184ebed15e32b:p001:c001",
+          "parent_id": "1fa184ebed15e32b:p001",
+          "chunk_type": "text",
+          "dense_rank": 5,
+          "sparse_rank": 1,
+          "rrf_score": 0.031778
+        },
+        {
+          "chunk_id": "7781b7f499f12e5e:p001:c001",
+          "parent_id": "7781b7f499f12e5e:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 13,
+          "rrf_score": 0.030092
+        },
+        {
+          "chunk_id": "bf15209688a44f17:p001:c001",
+          "parent_id": "bf15209688a44f17:p001",
+          "chunk_type": "text",
+          "dense_rank": 11,
+          "sparse_rank": 6,
+          "rrf_score": 0.029236
+        },
+        {
+          "chunk_id": "bdf097a12119db80:p001:c002",
+          "parent_id": "bdf097a12119db80:p001",
+          "chunk_type": "text",
+          "dense_rank": 14,
+          "sparse_rank": 10,
+          "rrf_score": 0.027799
+        },
+        {
+          "chunk_id": "a5ab474852215133:p001:c001",
+          "parent_id": "a5ab474852215133:p001",
+          "chunk_type": "text",
+          "dense_rank": null,
+          "sparse_rank": 2,
+          "rrf_score": 0.016129
+        }
+      ],
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "question_id": "q040",
+      "user_input": "显示器的对比度多少合适",
+      "reference": "65-70",
+      "response": "对比度不要超过70，建议65-70。",
+      "contexts_count": 4,
+      "debug": [
+        {
+          "chunk_id": "d24348aff94c4f88:p001:c001",
+          "parent_id": "d24348aff94c4f88:p001",
+          "chunk_type": "text",
+          "dense_rank": 1,
+          "sparse_rank": 1,
+          "rrf_score": 0.032787
+        },
+        {
+          "chunk_id": "3350ac3940a830b6:p001:c001",
+          "parent_id": "3350ac3940a830b6:p001",
+          "chunk_type": "text",
+          "dense_rank": 4,
+          "sparse_rank": 3,
+          "rrf_score": 0.031498
+        },
+        {
+          "chunk_id": "648f41293e695106:p001:c001",
+          "parent_id": "648f41293e695106:p001",
+          "chunk_type": "text",
+          "dense_rank": 9,
+          "sparse_rank": 2,
+          "rrf_score": 0.030622
+        },
+        {
+          "chunk_id": "648f41293e695106:p001:c002",
+          "parent_id": "648f41293e695106:p001",
+          "chunk_type": "text",
+          "dense_rank": 13,
+          "sparse_rank": 17,
+          "rrf_score": 0.026686
+        },
+        {
+          "chunk_id": "caf1584e4d64e933:p001:c001",
+          "parent_id": "caf1584e4d64e933:p001",
+          "chunk_type": "text",
+          "dense_rank": 20,
+          "sparse_rank": 4,
+          "rrf_score": 0.028125
+        }
+      ],
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.858
+    }
+  ]
+}

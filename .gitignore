@@ -67,3 +67,26 @@ htmlcov/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# rag_v01 运行期产物: 解析图片的落盘目录(RAG2_IMAGE_DIR 默认值), 随语料重灌就变
+data/rag2_images/
+
+# rag_v01 评估数据: 来源是学术研究许可的数据集(DuReader-Robust) → 派生语料与测试集不入库
+data/eval_dureader/
+data/eval_qa_v1.jsonl
+# 中间产物含检索回来的原文, 同样不入库(报告本身 json/md 保留, 那是基线证据)
+eval_reports/ragas_samples_*.jsonl
+
+
+# 需要跑 PDF 解析时: HF_HOME=.hf_home(模型不进 C 盘), 用完可删
+.hf_home/
+
+# zcode 工具的会话与配置(本地噪音, 2026-09-23 架构整理 c8)
+/.zcode/
+/.zcodeignore
+
+# rag_v01 load.py 生成物(referenced/embedded 导出与图片目录;语料本体在 data/rag2_samples,
+# 代码包零数据 —— c8 自 src/rag_v01/data 迁入;生成物可重跑 load.py 再生)
+data/rag2_samples/md/sample1.md
+data/rag2_samples/md/sample1_embedded.md
+data/rag2_samples/md/sample1_artifacts/

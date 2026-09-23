@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture review — TaskForce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .leak { stroke: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .mermaid svg { width: 100%; height: auto; max-height: 340px; }
+      .tree { height: 320px; overflow: auto; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+
+      <!-- Header -->
+      <header class="space-y-3">
+        <div class="flex items-baseline justify-between">
+          <h1 class="font-serif text-3xl font-bold">架构审查报告 — TaskForce</h1>
+          <span class="text-sm text-slate-500">2026-09-23</span>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed max-w-3xl">
+          整体骨架健康:六包单向依赖、双入口共用业务层、契约集中管理的原则大体被遵守。债务集中在三处——文档树越过 CLAUDE.md 索引野蛮生长且旧方案残留双口径;RAG 换轨期的临时例外(embed 反向依赖、入口直连内核)沉淀为结构性耦合;agent 层的识别知识漏进入口层,靠字符串互猜。
+        </p>
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
+          <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-3 border-2 border-slate-700 rounded-sm"></span>module</span>
+          <span class="flex items-center gap-1.5"><span class="inline-block w-6 border-t-2 border-dashed border-slate-500"></span>seam</span>
+          <span class="flex items-center gap-1.5"><span class="text-red-600 font-bold">──→</span>泄漏 leak</span>
+          <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-3 rounded-sm deep"></span>deep module</span>
+          <span class="text-slate-400">|</span>
+          <span>12 个审查代理 · 22 条 finding 逐条核实(保留 18) · 8 条候选</span>
+        </div>
+      </header>
+
+      <!-- Candidates -->
+      <section id="candidates" class="space-y-10">
+        <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold">候选 · 8</h2>
+
+      <!-- c1 -->
+      <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c1</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">重建文档体系索引并给旧方案加失效横幅</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">Strong</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">文档组织</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>CLAUDE.md</div>
+          <div>docs/improved/rag_improve_v1/00-方案总览.md</div>
+          <div>docs/new_module/rag_0.1/00-总览.md</div>
+          <div>docs/dev/react-refactor-plan.md</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <pre class="tree rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs leading-relaxed whitespace-pre">CLAUDE.md 文档体系表(仅登记 7 类,ADR 行停在 0001-0009)
+├── docs/dev/TODO.md          已登记
+├── docs/dev/ROADMAP.md       已登记
+├── docs/dev/NN-xxx/DEV.md    已登记
+├── docs/adr/0001-0009        已登记(实测已有 0010/0011)
+├── docs/troubleshooting/     已登记
+└── 表外孤儿·导航不可见
+    ├── docs/new_module/rag_0.1/   9 篇·现行唯一口径却缺席
+    ├── docs/improved/…/           7 篇·仍自称『以本文件为准』
+    ├── docs/guide/                17 篇讲解/面试
+    ├── dev/front/docs/            61 篇前端文档
+    └── ARCH-REVIEW/demo-scripts/简历 一次性快照与个人素材</pre>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <pre class="tree rounded-lg border border-emerald-300 bg-white p-3 font-mono text-xs leading-relaxed whitespace-pre">CLAUDE.md 文档体系 = 目录约定 + 状态索引(每目录一行)
+├── docs/dev/              开发过程(现行):TODO/ROADMAP/NN-xxx
+├── docs/adr/              决策记录(现行):0001-0011
+├── docs/troubleshooting/  故障沉淀(现行)
+├── docs/new_module/       模块方案(现行):rag_0.1 唯一口径
+├── docs/guide/            讲解与面试(现行,面向人读)
+├── docs/improved/         历史方案(已下线,头部失效横幅)
+├── docs/personal/         简历/演示私材(非工程文档)
+├── dev/front/docs/        前端开发文档(现行,三件套约定)
+└── 规则:新目录先入表再建文件;旧文档头部统一『状态+日期+继任链接』横幅</pre>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>CLAUDE.md 文档体系表停留在 7 类且 ADR 编号过时,guide/improved/new_module/前端文档等成片孤儿不在索引内,RAG 四套文档的演进关系只藏在别处手工勘误里,improved 旧方案仍自称『以本文件为准』与 new_module 的『唯一口径』互相矛盾。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>把文档体系表升级为『目录约定+现行/历史状态』的单一索引并规定新目录先入表,同时给 improved 等旧方案头部就地加失效横幅(状态+日期+继任文档链接),现行文档对称标注唯一口径。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">导航接口面收敛</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">演进口径单点</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">新文档有位可归</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">旧文就地标失效</li>
+        </ul>
+      </article>
+
+      <!-- c2 -->
+      <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c2</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">下沉 embedding 客户端消除 settings↔tools 循环</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">Strong</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">耦合度</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>src/settings/db/store.py</div>
+          <div>src/tools/rag/embed.py</div>
+          <div>tests/test_rag_embed.py</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart LR
+    STORE["settings/db/store"] -->|"反向 import embed"| EMBED["tools/rag/embed"]
+    EMBED --> CONFIG["settings/config"]
+    MEMCTX["agent/memory_ctx"] --> STORE
+    KB["tools/rag/kb_search"] --> CONFIG
+    classDef leak stroke:#dc2626,stroke-width:2px,color:#dc2626
+    classDef dark fill:#334155,color:#e2e8f0
+    class STORE,EMBED leak
+    class CONFIG dark
+    linkStyle 0 stroke:#dc2626
+              </pre>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart LR
+    EMB["settings/embeddings"] --> CONFIG["settings/config"]
+    STORE["settings/db/store"] --> EMB
+    MEMCTX["agent/memory_ctx"] --> STORE
+    KB["tools/rag/kb_search"] --> CONFIG
+    classDef dark fill:#334155,color:#e2e8f0
+    class EMB,STORE,CONFIG dark
+              </pre>
+            </div>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>settings/db/store.py:14 反向 import tools/rag/embed 而后者又 import settings.config,形成 settings→tools→settings 包级循环,打穿 CLAUDE.md 声明的 tools→settings 单向依赖,长期记忆测试也因此绑死真实 embedding key。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>把 embedding 客户端下沉为 settings 包内模块(如 settings/embeddings.py),get_store 增加可选 embed 参数缺省取 settings 版,tools/rag 只留 kb_search 适配层,test_rag_embed 同步迁移(签名变更先按 ROADMAP §7 登记)。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">依赖方向归位</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">消除包级循环</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">记忆测试免 key</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">tools职责纯净</li>
+        </ul>
+      </article>
+
+      <!-- c3 -->
+      <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c3</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">改造执行子图签名为可注入工具集</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">Strong</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">可测试性</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>src/agent/subagents/executor.py</div>
+          <div>tests/test_executor.py</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart TD
+    BUILD["build_executor_graph"] -->|"第 1 次·造 meta"| G["_gather_tools"]
+    BUILD -->|"第 2 次·bind_tools"| G
+    G --> MCP["MCP 连接发现·两批可能不一致"]
+    TEST["test_executor"] -.->|"穿透三层私有符号"| BUILD
+    classDef leak stroke:#dc2626,stroke-width:2px,color:#dc2626
+    classDef dark fill:#334155,color:#e2e8f0
+    linkStyle 0,1,3 stroke:#dc2626
+    class G dark
+              </pre>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart TD
+    CALLER["调用方/测试"] -->|"tools 显式注入·测试传假件"| BUILD["build_executor_graph(llm, tools=None)"]
+    BUILD --> META["meta 与 bind_tools 同源一份列表"]
+    BUILD -->|"缺省才调·仅一次"| G["_gather_tools"]
+    classDef dark fill:#334155,color:#e2e8f0
+    class G dark
+              </pre>
+            </div>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>build_executor_graph(llm) 在 build 期自建全部工具且 _gather_tools 被独立调用两次(executor.py:107/139,双次 MCP 发现、提示词工具索引 meta 与 bind_tools 工具集可能不同批),测试被迫 monkeypatch 三个模块的私有符号才能跑。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>给 build_executor_graph 增加可选参数 tools=None(缺省才调 _gather_tools),meta 与 bind_tools 从同一份列表推导,测试直接注入假工具列表(签名变更先按 ROADMAP §7 登记)。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">双次发现归一</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">meta与bind同源</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">测试免三层桩</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">seam进签名</li>
+        </ul>
+      </article>
+
+      <!-- c4 -->
+      <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c4</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">收敛知识库与记忆管理面的双入口重复实现</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Worth exploring</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">耦合度</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>src/api/routers/knowledge.py</div>
+          <div>src/cli/commands/knowledge.py</div>
+          <div>src/api/routers/memory.py</div>
+          <div>src/cli/commands/memory.py</div>
+          <div>src/rag_v01/__init__.py</div>
+          <div>src/agent/memory_ctx.py</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart LR
+    API["api 入口"] -.->|"判重/404/20MB 自写"| K["rag_v01 内核"]
+    CLI["cli 入口"] -.->|"同款重写·语义已漂移"| K
+    API -.->|"记忆 list/delete 重写"| S["settings/db/store"]
+    CLI -.->|"namespace 字面量三处"| S
+    classDef dark fill:#334155,color:#e2e8f0
+    class K,S dark
+    linkStyle 0,1,2,3 stroke:#dc2626
+              </pre>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart LR
+    API["api 入口·纯渲染"] --> F["rag_v01 facade·kb 管理入口"]
+    CLI["cli 入口·纯渲染"] --> F
+    API --> M["memory_ctx·管理查询"]
+    CLI --> M
+    F --> K["rag_v01 内核"]
+    M --> S["settings/db/store"]
+    classDef dark fill:#334155,color:#e2e8f0
+    class K,S dark
+              </pre>
+            </div>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>知识库管理(列表聚合/判重/404/20MB 上限)在 api 与 cli 各写一套且已现漂移(CLI 无大小上限),长期记忆管理查询与 namespace 字面量也在双入口逐字重复三处并行,两个管理面都绕过单点归属直接操持内核与 store 内部。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>在 rag_v01 facade 增设知识库管理入口收编判重/404/上限语义,把记忆管理查询与 namespace 定义收编进 memory_ctx,双入口退化为纯渲染并补 CLI 测试(接口扩展按 §7 登记)。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">管理逻辑单点</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">双入口零漂移</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">20MB语义对齐</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">换内核一处改</li>
+        </ul>
+      </article>
+
+      <!-- c5 -->
+      <article id="c5" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c5</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">定义 interrupt 载荷契约消除入口键名探测</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Worth exploring</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">耦合度</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>src/api/routers/chat.py</div>
+          <div>src/cli/repl.py</div>
+          <div>src/agent/contracts/__init__.py</div>
+          <div>src/agent/ask.py</div>
+          <div>src/agent/memory.py</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart LR
+    ASK["ask 节点"] -->|"question 键"| ENV["interrupt 载荷"]
+    MEM["memory 节点"] -->|"proposal 键"| ENV
+    API["api/chat·3 处探测"] -.->|"键名存在性猜类型"| ENV
+    CLI["cli/repl·1 处探测"] -.->|"同款键名判定"| ENV
+    classDef leak stroke:#dc2626,stroke-width:2px,color:#dc2626
+    class API,CLI leak
+    linkStyle 2,3 stroke:#dc2626
+              </pre>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart LR
+    CT["contracts·kind 载荷契约"] --> ASK["ask 节点"]
+    CT --> MEM["memory 节点"]
+    ASK --> ENV["挂起载荷·自带 kind"]
+    MEM --> ENV
+    ENV --> API["api/chat·读 kind 分发"]
+    ENV --> CLI["cli/repl·读 kind 分发"]
+    classDef dark fill:#334155,color:#e2e8f0
+    class CT dark
+              </pre>
+            </div>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>interrupt 载荷类型靠 question/proposal 键名存在性探测、三类合成消息前缀靠 startswith 对齐,识别知识散落在 api/chat.py 三处与 cli/repl.py 一处(且未知类型会静默落入 _resume_ask),agent/contracts 未覆盖该载荷形状。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>在 agent/contracts 定义挂起载荷 kind 契约(Literal["ask","memory"]+text)并集中导出前缀常量,ask/memory 节点按契约构造载荷,双入口直读 kind 分发(改契约先按 ROADMAP §7 登记)。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">识别知识单点</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">入口不再猜类型</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">接口面契约化</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">双入口免漂移</li>
+        </ul>
+      </article>
+
+      <!-- c6 -->
+      <article id="c6" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c6</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">把 kb_search 改为工厂 seam 显式注入检索</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Worth exploring</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">可测试性</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>src/tools/rag/kb_search.py</div>
+          <div>src/agent/subagents/retriever.py</div>
+          <div>tests/test_kb_search.py</div>
+          <div>tests/test_retriever.py</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart TD
+    TOOL["kb_search @tool"] --> DEF["_default_search·模块级私有"]
+    TOOL -->|"json.dumps"| MSG["ToolMessage·字符串契约"]
+    RET["retriever._collect_hits"] -->|"json.loads 重建"| MSG
+    T1["test_kb_search"] -.->|"monkeypatch 私有符号"| DEF
+    T2["test_retriever"] -.->|"裸赋值+autouse 还原"| DEF
+    classDef leak stroke:#dc2626,stroke-width:2px,color:#dc2626
+    classDef dark fill:#334155,color:#e2e8f0
+    class DEF leak
+    class MSG dark
+    linkStyle 3,4 stroke:#dc2626
+              </pre>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart TD
+    RET["retriever 装配点"] -->|"显式注入"| FAB["make_kb_search(search_backend)"]
+    T["测试"] -->|"工厂注入假 backend"| FAB
+    FAB --> TOOL["kb_search·工具名与 JSON 契约不变"]
+    TOOL -->|"仅出口序列化"| MSG["ToolMessage·字符串契约不变"]
+    classDef dark fill:#334155,color:#e2e8f0
+    class MSG dark
+              </pre>
+            </div>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>kb_search 的检索注入点是模块级私有 _default_search,测试只能 monkeypatch 或裸赋值(test_retriever 的假件已实测泄漏带红 test_kb_search,靠 autouse fixture 手工还原),(doc_id,seq) 去重键的拼接契约散在工具与收尾两个文件里。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>把工具改为工厂 make_kb_search(search_backend)(默认绑 rag_v01.search),retriever 装配时显式注入,seq 提取与去重映射内聚一处,工具名与 ToolMessage 的 JSON 字符串契约保持不变。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">seam显式化</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">测试免私有patch</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">假件不再泄漏</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">去重契约内聚</li>
+        </ul>
+      </article>
+
+      <!-- c7 -->
+      <article id="c7" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c7</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">合并子图双装配路径为共享注册表</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Worth exploring</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">模块深度</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>src/agent/build.py</div>
+          <div>src/agent/tasks.py</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart TD
+    BG["build_graph·急切编译三子图"] --> N["主图节点·仅 Send 备胎可达"]
+    TM["TaskManager._BUILDERS"] -->|"懒构建第二份"| DUP["第二份编译实例"]
+    DUP --> BT["后台线程 invoke"]
+    N -.->|"executor MCP 发现双倍支付"| MCP["MCP 发现×4"]
+    classDef leak stroke:#dc2626,stroke-width:2px,color:#dc2626
+    class DUP leak
+    linkStyle 3 stroke:#dc2626
+              </pre>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <div class="rounded-lg border border-slate-200 bg-white p-3">
+              <pre class="mermaid">
+flowchart TD
+    REG["agent/subagents·共享注册表"] --> BG["build_graph"]
+    REG --> TM["TaskManager"]
+    BG --> N["主图节点·备胎语义不变"]
+    TM --> BT["后台线程 invoke"]
+    classDef dark fill:#334155,color:#e2e8f0
+    class REG dark
+              </pre>
+            </div>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>三个子图存在双装配路径:build_graph 急切编译一份直挂(异步派发下仅同步 Send 备胎可达),TaskManager._BUILDERS 又懒构建第二份实例,executor 单次 build 内还调 _gather_tools 两次,一个 Web 进程共支付 4 次 MCP 发现冷启动。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>在 agent/subagents 建共享子图构建注册表作为唯一出处,build_graph 与 TaskManager 都取同一批编译实例,Send 备胎通道语义完全保留(ADR-0009 双通道语义不动)。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">装配出处唯一</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">冷启动减半</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">备胎语义不变</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">消除双份实例</li>
+        </ul>
+      </article>
+
+      <!-- c8 -->
+      <article id="c8" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">c8</span>
+          <h3 class="font-serif text-lg font-semibold mr-auto">清理示例 Skill 重复与包内语料残留</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Worth exploring</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">文档组织</span>
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 font-mono text-sm text-slate-600 space-y-0.5">
+          <div>skills/hello-world/SKILL.md</div>
+          <div>src/tools/skills/hello-word/SKILL.md</div>
+          <div>src/rag_v01/data/md</div>
+          <div>.gitignore</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Before</div>
+            <pre class="tree rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs leading-relaxed whitespace-pre">skills/hello-world/SKILL.md            运行时实例·拼写正确
+src/tools/skills/hello-word/SKILL.md   包内样例·少一个 l·逐字重复
+src/rag_v01/data/md/                   语料+生成物混在代码包
+                                       (conftest 口径已指向 data/rag2_samples)
+.zcode/                                工具会话草稿·未跟踪未忽略
+eval_reports/                          评测产物·仅部分 jsonl 被忽略</pre>
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">After</div>
+            <pre class="tree rounded-lg border border-emerald-300 bg-white p-3 font-mono text-xs leading-relaxed whitespace-pre">skills/hello-world/                    运行时实例(唯一)
+src/tools/skills/hello-world/SKILL.md  随包主模板·拼写统一·头注『复制到根使用』
+src/rag_v01/                           纯代码·包内语料并入 data/
+data/rag2_samples/                     语料唯一口径
+.gitignore                             补 /.zcode/ 等条目·工具噪音不再进版本库</pre>
+          </div>
+        </div>
+        <p class="text-sm"><strong class="text-slate-500">问题:</strong>同一示例 Skill 在 skills/hello-world 与 src/tools/skills/hello-word(少一个 l)各维护一份逐字相同的文件,rag_v01 包内残留语料与其自身 conftest 已定的 data/rag2_samples 口径冲突,.zcode 等工具会话产物未入 .gitignore。</p>
+        <p class="text-sm"><strong class="text-slate-500">方案:</strong>统一 Skill 主从关系与拼写(src 包内为主模板并头注用途,或删去一份加指引),包内语料并入 data/rag2_samples,.gitignore 补 /.zcode/ 等条目使代码包/运行数据/工具噪音各归其位。</p>
+        <ul class="flex flex-wrap gap-2 text-xs">
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">命名一致</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">检索不漏</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">代码包零数据</li>
+          <li class="px-2 py-0.5 rounded bg-stone-100 text-stone-600">根目录降噪</li>
+        </ul>
+      </article>
+
+      </section>
+
+      <!-- Top recommendation -->
+      <section id="top-recommendation">
+        <div class="rounded-xl border-2 border-emerald-400 bg-emerald-50/60 p-6 space-y-2">
+          <div class="text-xs uppercase tracking-wider text-emerald-600 font-semibold">首选建议 · Top recommendation</div>
+          <h3 class="font-serif text-xl font-bold">
+            <a href="#c1" class="underline decoration-emerald-300 underline-offset-4 hover:text-emerald-700">c1 · 重建文档体系索引并给旧方案加失效横幅</a>
+          </h3>
+          <p class="text-sm text-slate-700 leading-relaxed">只改一个 md 文件即可落地,零风险且立即生效;CLAUDE.md 是全仓读者与 AI 导航的一手 interface,而现行唯一口径 new_module/rag_0.1 恰好缺席索引、improved 旧方案仍自称『以本文件为准』,双口径误导每天都在发生。后续 c2-c7 的任何重构都要求人/AI 能先找到现行文档与契约出处,先修这张索引才能撬动其余候选的收益,也直接回应点名的文档组织问题。</p>
+        </div>
+      </section>
+
+      <footer class="text-xs text-slate-400 text-center pt-4">
+        TaskForce 架构审查 · 12 个审查代理(上下文盘点 3 · 四维审查 4 · 对抗核实 4 · 合成 1) · 词汇:codebase-design(module / interface / depth / seam / adapter / leverage / locality)
+      </footer>
+
+    </main>
+  </body>
+</html>

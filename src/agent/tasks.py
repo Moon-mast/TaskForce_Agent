@@ -2,8 +2,8 @@
 
 
 - 三个子图是独立编译图,可在后台线程直接 invoke({"contract": ...}),
-与主图共用同一 llm(OpenAI client 线程安全);子图实例懒构建,
-不派发就不装配(避免 executor 的 MCP 发现冷启动)。
+与主图共用同一 llm(OpenAI client 线程安全);实例经 agent/subagents/registry
+按 agent 惰性编译(c7),与 build_graph 直挂的是同一批,不再各装配一份。
 - 后台线程只写进程内任务表,绝不直接写主图 state(checkpointer 线程隔离);
 结果由 supervisor 每轮 drain_done() 原子回收注入,answer 消费即清。
 - 结果带会话线程归属:submit 时记账,drain/has_done 可按线程过滤(多线程不串)。
@@ -17,17 +17,9 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 from agent.contracts import ResultSummary, TaskContract
-from agent.subagents.executor import build_executor_graph
-from agent.subagents.research import build_research_graph
-from agent.subagents.retriever import build_retriever_graph
+from agent.subagents.registry import BUILDERS, get_subgraph
 
 MAX_WORKERS = 3
-
-_BUILDERS = {
-    "retriever": build_retriever_graph,
-    "research": build_research_graph,
-    "executor": build_executor_graph,
-}
 
 class TaskManager:
     """提交后台任务、原子回收结果;主图侧唯一入口,经 supervisor 注入。"""
@@ -89,9 +81,9 @@ class TaskManager:
             return {"pending": self._pending.get(thread_id, 0), "done": done}
 
     def _subgraph(self, agent: str):
-        """懒构建子图:只装配实际派发过的子智能体。"""
+        """经共享注册表取子图(c7):只缓存实际派发过的;与 build_graph 直挂同批实例。"""
         if agent not in self._subgraphs:
-            self._subgraphs[agent] = _BUILDERS[agent](self._llm)
+            self._subgraphs[agent] = get_subgraph(self._llm, agent)
         return self._subgraphs[agent]
 
     def _run(self,task_id:str,agent:str,contract:TaskContract,thread_id:str="")->None:
@@ -106,7 +98,7 @@ class TaskManager:
             summary = final["subagent_results"][0]
         except Exception as e:
             print(f"[task] {task_id} {agent} 异常: {e}", file=sys.stderr)
-            safe_agent = agent if agent in _BUILDERS else "retriever"
+            safe_agent = agent if agent in BUILDERS else "retriever"
             summary = ResultSummary(
                 agent=safe_agent, task_id=task_id, task=contract.task,
                 status="failed", conclusion=f"后台任务执行失败:{e}"[:100],

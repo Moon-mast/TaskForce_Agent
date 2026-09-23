@@ -1,6 +1,10 @@
 # 05-Retriever-Subagent 模块开发文档:检索子智能体
 
 > 状态:见 [ROADMAP.md](../ROADMAP.md) | 代码目录:`agent/subagents/retriever.py`
+> ℹ️ **2026-09-22 内核升级**:`kb_search` 工具的实现从 pgvector 换成 `rag_v01`(Milvus),**工具名与 JSON
+> 契约一字未改**(所以本文档的接口描述仍然有效),变的只是 `content` 取父块全文、`score` 取 RRF 分。
+> 见 [ROADMAP §7](../ROADMAP.md) 的 2026-09-22 条目。
+>
 > ⚠️ **2026-09-04 修订(ADR-0010)**:三子智能体统一 ReAct 模式。本模块原"查询改写→检索→组织答案"三节点管线设计**作废**,已实现代码由模块 R 重写;现行为准的设计见 [react-refactor-plan.md](../react-refactor-plan.md):ReAct 循环(agent→tools→finalize)+ `kb_search` 工具,查询改写由 LLM 多轮调工具涌现。
 > 一句话:把 03 的检索桩换成真子图--持 `kb_search` 工具的 ReAct 检索智能体(Agentic RAG),第一个真实子智能体上线。
 

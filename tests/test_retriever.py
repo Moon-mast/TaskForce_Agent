@@ -10,10 +10,11 @@ from agent.subagents.retriever import (
     _collect_hits,
     build_retriever_graph,
 )
+from rag_v01.contracts import ChildHit, RetrievedChunk
 
 
 class FakeStore:
-    """假 RAGStore:按查询词返回固定命中;raise_on_search=True 时模拟检索故障。"""
+    """假检索:按查询词返回固定 `RetrievedChunk`(新内核返回类型);raise_on_search=True 模拟故障。"""
 
     def __init__(self, per_query=None, raise_on_search=False):
         self._per_query = per_query or {}
@@ -25,6 +26,19 @@ class FakeStore:
         return self._per_query.get(query, [])[:top_k]
 
 
+def _row(doc_id="d1", source="a.md", seq=0, text="昆玉河沿岸有玉渊潭公园。", score=0.1):
+    """造一条真内核的命中:seq 藏在 chunk_id 的 `:cNNN` 里,适配层就是从这儿取 seq。"""
+    return RetrievedChunk(
+        parent_id=f"{doc_id}:p001",
+        parent_text=text,
+        rrf_rank=1,
+        hits=[ChildHit(chunk_id=f"{doc_id}:p001:c{seq:03d}", text=text,
+                       chunk_type="text", rrf_score=score)],
+        doc_id=doc_id,
+        source=source,
+    )
+
+
 def _call(query, cid="c1"):
     """构造与真实模型一致的 tool_call dict(id 与 ToolMessage.tool_call_id 配对)。"""
     return {"name": "kb_search", "args": {"query": query}, "id": cid, "type": "tool_call"}
@@ -34,6 +48,7 @@ def _contract(task="查知识库里的昆玉河"):
     return SubgraphContract(task=task, user_utterance="昆玉河沿岸有什么公园?").model_dump()
 
 
+# 适配层输出的 JSON 条目(直接被下面 _collect_hits 那几个用例当 ToolMessage 的载荷用)
 HIT_A = {"doc_id": "d1", "filename": "a.md", "seq": 0,
          "content": "昆玉河沿岸有玉渊潭公园。", "score": 0.1}
 HIT_B = {"doc_id": "d2", "filename": "b.md", "seq": 3,
@@ -73,15 +88,13 @@ class FakeAlwaysToolLLM:
 
 
 def _graph(llm, store):
-    import tools.rag.kb_search as kb_mod
-
-    kb_mod._default_store = lambda: store  # 直接替换,避免 lru_cache 残留
-    return build_retriever_graph(llm)
+    """c6:装配点显式注入假后端 —— 不再打桩模块内部,无泄漏面。"""
+    return build_retriever_graph(llm, search_backend=store.search)
 
 
 def test_success_flow_parses_json_answer():
     """有命中 + 模型自发摘要 JSON(带围栏):finalize 零额外 LLM 调用,解析出结论要点。"""
-    store = FakeStore({"昆玉河": [HIT_A]})
+    store = FakeStore({"昆玉河": [_row()]})
     llm = FakeReActLLM(rounds=[
         AIMessage(content="", tool_calls=[_call("昆玉河")]),
         AIMessage('```json\n{"conclusion": "沿岸有玉渊潭公园", "key_points": ["玉渊潭"]}\n```'),
@@ -99,7 +112,7 @@ def test_success_flow_parses_json_answer():
 
 def test_success_prose_fallback():
     """模型最终输出普通文本(非 JSON):结论截断原文,要点为空,状态仍 success。"""
-    store = FakeStore({"昆玉河": [HIT_A]})
+    store = FakeStore({"昆玉河": [_row()]})
     llm = FakeReActLLM(rounds=[
         AIMessage(content="", tool_calls=[_call("昆玉河")]),
         AIMessage("知识库记载:昆玉河沿岸有玉渊潭公园。"),
@@ -113,7 +126,7 @@ def test_success_prose_fallback():
 
 def test_two_calls_cross_dedup():
     """跨两次工具调用命中同一 (doc_id, seq):finalize 重建 hits 时去重。"""
-    store = FakeStore({"q1": [HIT_A], "q2": [HIT_A]})
+    store = FakeStore({"q1": [_row()], "q2": [_row()]})
     llm = FakeReActLLM(rounds=[
         AIMessage(content="", tool_calls=[_call("q1", "c1")]),
         AIMessage(content="", tool_calls=[_call("q2", "c2")]),
@@ -155,7 +168,7 @@ def test_tool_error_does_not_crash():
 
 def test_node_trace():
     """子图节点轨迹:agent → tools → agent → finalize。"""
-    store = FakeStore({"q": [HIT_A]})
+    store = FakeStore({"q": [_row()]})
     llm = FakeReActLLM(rounds=[
         AIMessage(content="", tool_calls=[_call("q")]),
         AIMessage("命中了玉渊潭公园。"),
