@@ -16,6 +16,7 @@ from langgraph.graph import END, START, StateGraph
 from agent.answer import answer_node
 from agent.ask import ask_node
 from agent.memory import memory_node
+from agent.planner import plan_confirm_node, plan_draft_node
 from agent.state import AgentState
 from agent.subagents.registry import get_subgraph
 from agent.supervisor import route_node
@@ -60,7 +61,8 @@ def build_graph(llm, checkpointer=None, tasks=None):
     b.add_node("retriever", get_subgraph(llm, "retriever"))
     b.add_node("research", get_subgraph(llm, "research"))
     b.add_node("executor", get_subgraph(llm, "executor"))
-
+    b.add_node("plan_draft", lambda s: plan_draft_node(s, llm))
+    b.add_node("plan_confirm", lambda s, config: plan_confirm_node(s, tasks, config=config))
     b.add_edge(START, "supervisor")
     # fan-in:子图完成后回 supervisor 重新路由
     for name in ("retriever", "research", "executor"):
@@ -68,5 +70,6 @@ def build_graph(llm, checkpointer=None, tasks=None):
     b.add_edge("answer", END)
     b.add_edge("ask", "supervisor")
     b.add_edge("memory", END)
-
+    b.add_edge(START, "supervisor")
+    b.add_edge("plan_draft", "plan_confirm")   # 新增(唯一新静态边)
     return b.compile(checkpointer=checkpointer)

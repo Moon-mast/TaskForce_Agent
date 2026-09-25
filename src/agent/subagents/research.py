@@ -8,6 +8,7 @@ from agent.contracts import ResultSummary, SubgraphContract
 from agent.memory_ctx import load_agents_md
 from agent.subagents.react import ReactState, build_react_subgraph, extract_answer
 from settings.loader import load_prompt
+from tools.tool.clock import get_current_time
 from tools.websearch.search import web_search
 
 MAX_ITERATIONS = 8  # 工具执行轮数上限(主图 recursion_limit 兜底)
@@ -98,7 +99,7 @@ def build_research_graph(llm) -> CompiledStateGraph:
 
     return build_react_subgraph(
         llm=llm,
-        tools=[web_search],
+        tools=[web_search, get_current_time],
         system_prompt=system_prompt,
         max_iterations=MAX_ITERATIONS,
         build_summary=build_summary,

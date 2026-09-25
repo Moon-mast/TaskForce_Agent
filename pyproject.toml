@@ -1,7 +1,7 @@
 [project]
 name = "taskforce"
 version = "0.1.0"
-description = "TaskForce -- 基于 LangGraph 的个人 Agent 工作台:知识库问答、联网调研、沙箱代码执行"
+description = "TaskForce -- 企业级投资调研助手:基于 LangGraph 的多智能体系统(知识库问答、联网调研、沙箱代码执行、任务拆分规划)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "pyyaml>=6.0",
@@ -24,6 +24,7 @@ dependencies = [
     "jieba>=0.42.1",
     "docling>=2.128.0",
     "e2b-code-interpreter>=2.10.0",
+    "langgraph-cli[inmem]>=0.4.31",
 ]
 
 [project.optional-dependencies]

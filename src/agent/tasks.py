@@ -96,6 +96,9 @@ class TaskManager:
             graph = self._subgraph(agent)
             final = graph.invoke({"contract": contract.model_dump()})
             summary = final["subagent_results"][0]
+            # task_id 回填:子图 finalize 各自 uuid4 自造 id(research.py:63 等),
+            # 与 submit 分配的对不上;drain 后 plan 对账全靠它,必须覆盖
+            summary = summary.model_copy(update={"task_id": task_id})
         except Exception as e:
             print(f"[task] {task_id} {agent} 异常: {e}", file=sys.stderr)
             safe_agent = agent if agent in BUILDERS else "retriever"

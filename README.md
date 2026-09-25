@@ -1,8 +1,8 @@
 # TaskForce
 
-**基于 LangGraph 的个人 Agent 工作台:知识库问答、联网调研、沙箱代码执行,CLI / HTTP API / Web 工作台三入口。**
+**基于 LangGraph 的企业级投资调研助手:知识库问答(研报/公告/财报)、联网调研、沙箱代码执行,CLI / HTTP API / Web 工作台三入口;复杂调研自动拆解为计划(todolist),经确认后多智能体接力执行。**
 
-面向实习求职的项目经历。单用户本地部署,Windows 开发机,uv 管理,Python 3.12。
+单用户本地部署,Windows 开发机,uv 管理,Python 3.12。
 
 一次派发多个子智能体、后台并行执行、完成后自动汇总(无需再问):
 

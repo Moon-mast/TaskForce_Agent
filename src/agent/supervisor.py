@@ -16,7 +16,15 @@ from langgraph.graph import END
 from langgraph.types import Command, Send
 
 from agent.answer import _render_results
-from agent.contracts import PREFIX_SUBAGENT_RESULT, Route, Task, TaskContract
+from agent.contracts import (
+    PREFIX_SUBAGENT_RESULT,
+    PREFIX_SYSTEM_NOTICE,
+    Plan,
+    ResultSummary,
+    Route,
+    Task,
+    TaskContract,
+)
 from agent.memory_ctx import load_agents_md
 from agent.state import AgentState
 from settings.loader import load_prompt
@@ -57,6 +65,46 @@ def dispatch_sends(tasks: list[Task], state: AgentState, route: Route | None = N
         update={"last_route": route.model_dump()} if route else {}
     )
 
+def _advance_plan(
+    state: AgentState, injected: list[ResultSummary], tasks, config=None
+) -> tuple[str | None, dict]:
+    """plan 确定性推进(ADR-0012 决策 1):对账 -> 失败级联 -> 依赖解锁分批派发 -> 收口。
+
+    推进不走路由 LLM。返回 (goto, update 增量):
+    - goto="answer":计划全终态,收口汇总(plan 清账)
+    - goto=END:唤醒轮(最后一条消息是合成通知)短路——派了新批/刚对完账,本轮结束
+    - goto=None:用户轮推进完毕(增量并入 update)或无新事件,继续既有路由
+    """
+    # 延迟 import:planner 顶部引用 supervisor 的 MAX_PARALLEL_SUBAGENTS,
+    # 两边都在顶部互相引用会循环;函数内 import 时两模块都已加载完毕
+    from agent.planner import _dispatch_ready
+
+    plan=Plan.model_validate(state['plan'])
+    if injected:
+        for r in injected:
+            plan.mark_by_task(r.task_id,r)  # success/partial -> done,其余 -> failed
+        plan.cascade_skip()  # 依赖失败/跳过步的 pending -> skipped(迭代到不动点)
+    thread_id=((config or {}).get("configurable") or {}).get("thread_id") or ""
+    ids=_dispatch_ready(plan,tasks,thread_id) if tasks is not None else []
+
+    if plan.finished():
+        # 收口:plan 清账;answer 从 subagent_results 拿全部步结果汇总
+        # (messages[-1] 是 AUTO_NOTICE"请直接汇总结果",语义正好衔接)
+        return "answer",{
+            "plan": None,
+            "messages": [AIMessage(content=f"计划执行完毕:\n{plan.snapshot()}")],
+        }
+    if not (ids or injected):
+        return None, {}  # 有 running 在跑、本轮无新事件:不短路不推进
+    snap = {
+        "plan": plan.model_dump(),
+        "messages": [AIMessage(content=f"计划推进:\n{plan.snapshot()}")],
+    }
+    last = state["messages"][-1] if state["messages"] else None
+    if last is not None and str(last.content).startswith(PREFIX_SYSTEM_NOTICE):
+        return END, snap  # 唤醒轮:watcher/前端轮询驱动,无需 LLM
+    return None, snap  # 用户轮:先推进,继续路由处理用户新话
+
 
 def route_node(state: AgentState, llm, tasks=None, config=None) -> Command:
     """supervisor 节点:全量 messages 结构化路由;解析失败/校验失败回退 answer。
@@ -75,6 +123,17 @@ def route_node(state: AgentState, llm, tasks=None, config=None) -> Command:
         if done:
             injected = done
             state = {**state, "subagent_results": [*state.get("subagent_results", []), *done]}
+
+    # ---- plan_0.1 确定性推进:唤醒轮短路、用户轮先推进再路由(03 §3) ----
+    plan_goto, plan_extra = None, {}
+    if state.get("plan"):
+        plan_goto, plan_extra = _advance_plan(state, injected, tasks, config)
+        if injected:
+            # 短路/收口直接返回时 drain 消费即清,结果必须随本轮 update 落回 state
+            plan_extra = {**plan_extra, "subagent_results": injected}
+        if plan_goto is not None:
+            return Command(goto=plan_goto, update=plan_extra)
+
     # 固定 system(ADR-0011):仅静态内容(角色 + agents.md + 规则 + 输出格式),
     # 记忆检索/子结果等动态内容一律走消息流,不进 system(保前缀缓存)。
     system = load_prompt("supervisor", skills_meta=_skills_meta(), agents_md=load_agents_md())
@@ -103,8 +162,11 @@ def route_node(state: AgentState, llm, tasks=None, config=None) -> Command:
     update: dict = {"last_route": route.model_dump()} if route else {}
     if injected:
         update["subagent_results"] = injected
+    update = {**update, **plan_extra}  # plan_0.1:用户轮推进结果并入(plan 状态随路由续写)
     if route is None:
         return Command(goto="answer", update=update)
+    if route.next == "plan":
+        return Command(goto="plan_draft", update=update)
     if route.next == "dispatch":
         # 空任务列表(LLM 输出 tasks 为空)不能空转结束:否则图停在 supervisor,
         # run_turn 会把用户自己的消息当成回复返回。退化走 answer。

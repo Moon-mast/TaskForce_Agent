@@ -18,6 +18,8 @@
 /.taskforce/
 # 本地工具状态
 /.omo/
+# langgraph dev(LangGraph Studio)本地状态目录:进程级 checkpoint 与运行产物
+/.langgraph_api/
 
 # ─────────────────────────────────────────────────────────────
 # Python

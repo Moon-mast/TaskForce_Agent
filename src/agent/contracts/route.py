@@ -30,7 +30,7 @@ class Task(BaseModel):
 class Route(BaseModel):
     """supervisor 路由决策。"""
 
-    next: Literal["answer", "ask", "memory", "dispatch"]
+    next: Literal["answer", "ask", "memory", "dispatch","plan"]
     question: str | None = (
         Field(
             default=None,

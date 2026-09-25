@@ -272,3 +272,11 @@ def answer(req: AnswerRequest) -> StreamingResponse:
     config = {"recursion_limit": 40, "configurable": {"thread_id": req.thread_id}}
     _require_interrupt(graph,config,"ask")
     return _sse_run(graph, config, usage, resume=req.text)
+
+@router.post("/plan")
+def plan(req: AnswerRequest) -> StreamingResponse:
+    """plan 确认挂起恢复:resume=y 执行 / 其他取消(与 REPL 回复语义一致)。"""
+    graph, _checkpointer, usage, _tasks = _get_app()
+    config = {"recursion_limit": 40, "configurable": {"thread_id": req.thread_id}}
+    _require_interrupt(graph, config, "plan")
+    return _sse_run(graph, config, usage, resume=req.text)

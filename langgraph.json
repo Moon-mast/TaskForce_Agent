@@ -1,0 +1,11 @@
+{
+  "$schema": "https://langgra.ph/schema.json",
+  "dependencies": ["."],
+  "graphs": {
+    "taskforce": "./src/agent/studio.py:make_studio_graph"
+  },
+  "env": {
+    "PYTHONUTF8": "1"
+  },
+  "python_version": "3.12"
+}

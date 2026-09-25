@@ -26,6 +26,7 @@ from settings.loader import load_prompt
 from tools.mcp.client import MCPToolProvider
 from tools.sandbox.client import execute_python as _execute_python
 from tools.skills.loader import SkillRegistry
+from tools.tool.clock import get_current_time
 from tools.tool.files import list_files, read_file, write_file
 
 MAX_ITERATIONS = 12  # 工具调执行轮数上限
@@ -57,7 +58,10 @@ def get_tool_detail(name: str) -> str:
 
 def _gather_tools() -> list:
     """装配工具集:内置 + 元工具 + MCP(发现失败降级为空,不阻塞装配;重名加前缀)。"""
-    base = [read_file, write_file, list_files, execute_python, load_skill, get_tool_detail]
+    base = [
+        read_file, write_file, list_files, execute_python,
+        load_skill, get_tool_detail, get_current_time,
+    ]
     out = list(base)
     names = {t.name for t in out}
     try:

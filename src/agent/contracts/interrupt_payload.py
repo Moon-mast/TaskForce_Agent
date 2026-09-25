@@ -16,13 +16,13 @@
 """
 from typing import Literal, TypedDict
 
-InterruptKind = Literal["ask", "memory", "unknown"]
+InterruptKind = Literal["ask", "memory", "plan","unknown"]
 
 
 class InterruptPayload(TypedDict):
     """挂起载荷(c5 新形状):kind 自描述, 入口不再按键名猜类型。"""
 
-    kind: Literal["ask", "memory"]
+    kind: Literal["ask", "memory","plan"]
     text: str
 
 
@@ -35,6 +35,9 @@ def memory_payload(proposal: str) -> InterruptPayload:
     """memory 确认写入挂起载荷。"""
     return {"kind": "memory", "text": proposal}
 
+def plan_payload(plan_text: str) -> InterruptPayload:
+    """计划确认挂起载荷(plan_0.1):text 为进度快照 + 确认指引(双入口直读展示)。"""
+    return {"kind": "plan", "text": plan_text}
 
 def classify_interrupt(value) -> tuple[InterruptKind, str]:
     """识别挂起载荷 → (kind, text)。
@@ -44,7 +47,7 @@ def classify_interrupt(value) -> tuple[InterruptKind, str]:
     """
     v = value if isinstance(value, dict) else {}
     kind = v.get("kind")
-    if kind in ("ask", "memory"):
+    if kind in ("ask", "memory","plan"):
         return kind, str(v.get("text", ""))
     if "question" in v:  # 旧形状兼容(存量检查点, 不迁移)
         return "ask", str(v["question"])

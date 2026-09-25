@@ -66,6 +66,15 @@ def test_submit_drains_result():
     assert out[0].status != "failed"  # fake 模型无 tool_calls → need_clarification 等正常态
 
 
+def test_run_backfills_task_id():
+    """_run 正常路径必须回填 submit 分配的 task_id:子图只看契约四件套、不知道 id,
+    plan 对账(mark_by_task)全靠它。2026-09-24 真模型冒烟实测:不回填则计划卡死 running。"""
+    tm = TaskManager(_Llm())
+    ids = tm.submit([("research", _contract())])
+    out = _drain_wait(tm)
+    assert out and out[0].task_id == ids[0]  # 与 submit 返回的 id 严格一致
+
+
 def test_drain_consumes_once():
     """drain 消费即清:第二次 drain 为空,不重复注入。"""
     tm = TaskManager(_Llm())

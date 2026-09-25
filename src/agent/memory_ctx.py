@@ -31,12 +31,13 @@ LIST_LIMIT = 100  # 管理面列表上限(API /memory 与 REPL /memory list 同�
 
 
 @lru_cache(maxsize=1)
-def load_agents_md(path: str = "agents.md") -> str:
-    """读 agents.md 全文(会话级权威背景,进固定 system);缺失给占位。构建期读入并缓存。"""
+def load_agents_md(path: str = "BACKEND.md") -> str:
+    """读 BACKEND.md 全文(TaskForce 产品内智能体的运行时背景,进固定 system);
+    缺失给占位。构建期读入并缓存。"""
     p = Path(path)
     if p.exists():
         return p.read_text(encoding="utf-8")
-    return "(未提供 agents.md,按默认行为运行)"
+    return "(未提供 BACKEND.md,按默认行为运行)"
 
 
 @lru_cache(maxsize=1)

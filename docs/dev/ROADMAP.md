@@ -99,6 +99,7 @@ flowchart TD
 | MCP 工具提供器(索引常驻 + 按需详情 + 降级) | 08 | `tools/mcp/client.py` | 09(executor) |
 | 沙箱工具组(`execute_python(code, timeout)` / `write_file` / `read_file` / `list_files`) | 09 | `tools/sandbox/client.py` | 09(executor)、`tools/tool/files.py` |
 | 内置文件工具(`read_file`/`write_file`/`list_files`,操作沙箱工作区) | 09 | `tools/tool/files.py` | 09(executor) |
+| `PlanDraft`/`PlanStepDraft`/`Plan`/`PlanStep`(计划契约,plan_0.1) | plan_0.1 | `agent/contracts/plan.py` | 03(planner 节点/推进块)、06(HITL 模式参照) |
 
 ## 7. 契约变更登记
 
@@ -134,6 +135,7 @@ flowchart TD
 | 2026-09-23 | kb_search 工厂 seam + retriever 注入签名(架构整理 c6) | ① `kb_search` 由模块级单例改为工厂 `make_kb_search(search_backend=None)`(缺省后端 `_default_search` 仍惰性转调 rag_v01.search;**工具名与 ToolMessage JSON 五键契约不变**);② 新增 `hit_key(item)`,`(doc_id, seq)` 去重键定义与 seq 提取同居 `tools/rag/kb_search.py`(`_collect_hits` 改调 hit_key);③ `build_retriever_graph(llm, search_backend=None)` 显式注入后端;tests 改为工厂注入假件, 删除 test_retriever 裸赋值 + autouse 还原 hack(实测假件泄漏事故就此根除) | 05/11 + tests | ✅ 已同步代码 |
 
 | 2026-09-23 | 子图装配唯一出处(架构整理 c7) | 新增 `agent/subagents/registry.py`:`BUILDERS` + `get_subgraph(llm, agent)`(按 llm 强引用缓存、按 agent 惰性编译, 同 llm 同 agent 只编译一次);`build_graph` 直挂与 `TaskManager._subgraph` 后台 invoke 经注册表取**同一批**实例, 消除双份装配与双倍 MCP 发现冷启动;`tasks._BUILDERS` 模块字典并入 registry;Send 备胎通道与 ADR-0009 双通道语义不变;TaskManager 懒构建语义保留(未派发的 agent 仍不编译) | 03/10/11 + tests | ✅ 已同步代码 |
+| 2026-09-24 | Plan 系契约 + Route.next 扩展 + AgentState.plan(plan_0.1 Plan-and-Execute) | ① 新增 `agent/contracts/plan.py`:`PlanStepDraft/PlanDraft`(LLM 输出形状,`validate_structure` 四规则——id 格式 `^s\d+$` 且唯一/依赖存在/只向前引用防环/1~5 步)+ `PlanStep/Plan`(运行时形状:status/task_id/result_digest 为代码维护的运行时字段;行为方法 ready_steps/mark_by_task/cascade_skip/snapshot/finished);② `Route.next` Literal 加 `"plan"`(Literal 加值向后兼容,旧 checkpoint 不受影响);③ `AgentState` 新增 `plan: dict \| None`(存 model_dump 同 last_route 先例,plan_draft/plan_confirm/supervisor 推进块单点写,无 reducer);④ **ResultSummary 无变更**(task_id 已有 summary.py:22,对账靠派发时回填 PlanStep.task_id);⑤ interrupt 载荷新增 `plan_payload`(kind="plan",挂起点清单经 ADR-0012 扩为 ask/memory/plan_confirm) | 03(supervisor 推进)/06(HITL 同款)/11(HITL 恢复端点复用) + tests | 🔨 方案定稿(docs/new_module/plan_0.1/),代码按其 TODO.md 誊写 |
 
 ## 8. 开发原则(硬性)
 

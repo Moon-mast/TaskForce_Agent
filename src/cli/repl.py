@@ -43,10 +43,10 @@ def _resume_confirm(ctx: ReplContext, renderer: StreamRenderer,
     """
     console = ctx.console
     console.print(f"[yellow]智能体想记住:[/yellow] {proposal}")
-    console.print("[dim]请用 /confirm yes 或 /confirm no(其他输入将被拦截)[/dim]")
+    console.print("[dim]输入 /confirm yes 或 /confirm no(其他输入将被拦截)[/dim]")
     while True:
         try:
-            c = console.input("[bold green]确认?[/bold green] ").strip()
+            c = console.input("[bold cyan]❯ [/bold cyan]").strip()
         except (EOFError, KeyboardInterrupt):
             console.print("\n[dim]bye bye[/]")
             return False
@@ -60,7 +60,7 @@ def _resume_confirm(ctx: ReplContext, renderer: StreamRenderer,
     # renderer/usage 与 watcher 自动汇总轮互斥:全程持锁(new_turn 到 finish 原子)
     with turn_lock:
         renderer.new_turn()
-        renderer.start_status("模型正在处理确认结果…")
+        renderer.start_status("处理确认结果…")
         try:
             final = run_turn(ctx.graph, ctx.graph_config, resume=arg in ("yes", "y"),
                              on_token=renderer.on_token, on_route=renderer.on_route)
@@ -76,9 +76,9 @@ def _resume_ask(ctx: ReplContext, renderer: StreamRenderer, commands: dict,
                 turn_lock: threading.Lock, question: str) -> bool:
     """ask 问询挂起(classify 分出的问题文本):打印问题,自由文本输入即回答;False=退出 REPL。"""
     console = ctx.console
-    console.print(f"[bold yellow]Agent 提问 ›[/bold yellow] {question}")
+    console.print(f"[bold yellow]需要补充 ›[/bold yellow] {question}")
     try:
-        answer = console.input("[bold green]你的回答 ›[/bold green] ").strip()
+        answer = console.input("[bold cyan]❯ [/bold cyan]").strip()
     except (EOFError, KeyboardInterrupt):
         console.print("\n[dim]bye bye[/]")
         return False
@@ -92,7 +92,7 @@ def _resume_ask(ctx: ReplContext, renderer: StreamRenderer, commands: dict,
         return True
     with turn_lock:
         renderer.new_turn()
-        renderer.start_status("模型正在思考中…")
+        renderer.start_status("思考中…")
         try:
             final = run_turn(ctx.graph, ctx.graph_config, resume=answer,
                              on_token=renderer.on_token, on_route=renderer.on_route)
@@ -103,6 +103,29 @@ def _resume_ask(ctx: ReplContext, renderer: StreamRenderer, commands: dict,
             ctx.usage.record(final)
     return True
 
+def _resume_plan(ctx: ReplContext, renderer: StreamRenderer,
+                 turn_lock: threading.Lock, plan_text: str) -> bool:
+    """计划确认挂起:打印 todolist,输入即恢复(resume 值直接交给 plan_confirm 解析)。"""
+    ctx.console.print(Panel(
+        plan_text, title="[bold cyan]调研计划确认[/]", border_style="cyan", expand=False
+    ))
+    try:
+        answer = ctx.console.input("[bold cyan]❯ [/bold cyan]").strip()
+    except (EOFError, KeyboardInterrupt):
+        ctx.console.print("\n[dim]bye bye[/]")
+        return False
+    with turn_lock:
+        renderer.new_turn()
+        renderer.start_status("处理确认结果…")
+        try:
+            final = run_turn(ctx.graph, ctx.graph_config, resume=answer,
+                             on_token=renderer.on_token, on_route=renderer.on_route)
+        finally:
+            # 与其他恢复分支同款清理:挂起/异常路径都必须收掉 Live 与 Spinner
+            renderer.finish()
+        if final:
+            ctx.usage.record(final)
+    return True
 
 def _auto_summary_worker(ctx: ReplContext, renderer: StreamRenderer,
                          wake: threading.Event, turn_lock: threading.Lock) -> None:
@@ -121,7 +144,7 @@ def _auto_summary_worker(ctx: ReplContext, renderer: StreamRenderer,
             # 清掉当前输入提示行:用户已敲未提交的字符仍在内核输入缓冲,回车照常提交
             ctx.console.file.write("\r\x1b[2K")
             renderer.new_turn()
-            renderer.start_status("后台任务已完成,正在汇总…")
+            renderer.start_status("汇总子智能体结果…")
             try:
                 final = run_turn(ctx.graph, ctx.graph_config, AUTO_NOTICE,
                                  on_token=renderer.on_token, on_route=renderer.on_route)
@@ -132,7 +155,7 @@ def _auto_summary_worker(ctx: ReplContext, renderer: StreamRenderer,
                 if not streamed:
                     renderer.render_final(final.content or "")
             # 重印输入提示符(end 不换行),用户可继续打字
-            ctx.console.print("[bold green]用户 ›[/bold green] ", end="")
+            ctx.console.print("[bold cyan]❯ [/bold cyan]", end="")
 
 
 def main() -> None:
@@ -153,16 +176,21 @@ def main() -> None:
     sessions.set_current(thread_id)
 
     console = Console()
-    console.print(Panel.fit(
-        f"[bold cyan]TaskForce REPL[/] · Agent 工作台\n"
-        f"新会话 [green]{thread_id}[/green] | /help 查看命令",
-        border_style="cyan",
-        subtitle=f"上次会话 {previous}",
-    ))
+    console.print()
+    console.print("[bold cyan]✦ TaskForce[/] [dim]· 企业投资调研助手[/]")
+    console.print(f"[dim]新会话 {thread_id} · /help 查看命令 · 上次会话 {previous}[/dim]")
+    console.print()
 
-    ctx = ReplContext(console=console, settings=settings, graph=graph,
-                      checkpointer=checkpointer, sessions=sessions, usage=usage,
-                      tasks=tasks, thread_id=thread_id)
+    ctx = ReplContext(
+        console=console,
+        settings=settings,
+        graph=graph,
+        checkpointer=checkpointer,
+        sessions=sessions,
+        usage=usage,
+        tasks=tasks,
+        thread_id=thread_id
+    )
     renderer = StreamRenderer(console)
     commands = build_commands(ctx)
     # 后台监视:任务完成即主动汇总(daemon,REPL 退出即终止)
@@ -182,14 +210,18 @@ def main() -> None:
             if kind == "unknown":
                 # c5:未知挂起不再静默落入问询——显式告警后按自由文本兜底,不卡死循环
                 console.print(f"[red]未识别的挂起类型[/](原始:{text}),按问询处理")
-            ok = (_resume_confirm(ctx, renderer, turn_lock, text) if kind == "memory"
-                  else _resume_ask(ctx, renderer, commands, turn_lock, text))
+            if kind == "plan":
+                ok = _resume_plan(ctx, renderer, turn_lock, text)
+            elif kind == "memory":
+                ok = _resume_confirm(ctx, renderer, turn_lock, text)
+            else:
+                ok = _resume_ask(ctx, renderer, commands, turn_lock, text)
             if not ok:
                 return
             continue
 
         try:
-            text = console.input("[bold green]用户 ›[/bold green] ").strip()
+            text = console.input("[bold cyan]❯ [/bold cyan]").strip()
         except (EOFError, KeyboardInterrupt):
             console.print("\n[dim]bye bye[/]")
             break
@@ -210,11 +242,12 @@ def main() -> None:
         # renderer/usage 与 watcher 自动汇总轮互斥:全程持锁(new_turn 到 finish 原子)
         with turn_lock:
             renderer.new_turn()
-            renderer.start_status("模型正在思考中…")  # 回车即转圈,直到首条路由/首个 token
+            renderer.start_status("思考中…")  # 回车即转圈,路由后按节点切换文案
             try:
-                final = run_turn(graph, config, text,
-                                 on_token=renderer.on_token, on_route=renderer.on_route,
-                                 on_interrupt=renderer.on_interrupt)
+                final = run_turn(
+                    graph, config, text,
+                    on_token=renderer.on_token, on_route=renderer.on_route,
+                    on_interrupt=renderer.on_interrupt)
             finally:
                 # 无论正常/异常,都要把 Spinner 和 Live 干净收掉;返回值即 streamed 标志
                 streamed = renderer.finish()

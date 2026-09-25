@@ -18,8 +18,11 @@ from settings.loader import load_prompt
 from tools.mcp.client import mcp_meta
 from tools.sandbox.client import sandbox_meta
 from tools.skills.loader import _skills_meta
+from tools.tool.clock import get_current_time
 
 MEMORY_LOOP_MAX = 4  # answer 侧记忆工具循环轮数上限(防失控,同子图双层策略)
+# answer 的全部工具:记忆(memory-as-tool)+ 时钟(LLM 无实时时钟,时效判断必需)
+ANSWER_TOOLS = [*MEMORY_TOOLS, get_current_time]
 
 # 子结果"依据"渲染预算:子智能体验到的正文必须能进 answer 的上下文,
 # 但不能无界(检索片段 × 多任务会撑爆提示词)。supervisor 侧不走这段(只做路由决策)。
@@ -99,21 +102,21 @@ def _answer_with_memory(llm, messages) -> AIMessage:
     """answer 侧记忆工具循环(ADR-0011):主智能体可调 memory_search/store_memory,
     结果以 ToolMessage 进本轮消息流;无 tool_calls 即收尾。工具消息不写回主图 state
     (按需查询,不污染后续轮次的固定 system 前缀)。"""
-    llm_with_tools = llm.bind_tools(MEMORY_TOOLS)
+    llm_with_tools = llm.bind_tools(ANSWER_TOOLS)
     res = llm_with_tools.invoke(messages)
     for _ in range(MEMORY_LOOP_MAX):
         if not getattr(res, "tool_calls", None):
             break
         tool_msgs = []
         for call in res.tool_calls:
-            tool = next((t for t in MEMORY_TOOLS if t.name == call["name"]), None)
+            tool = next((t for t in ANSWER_TOOLS if t.name == call["name"]), None)
             content = (
                 f"未知工具:{call['name']}"
                 if tool is None
                 else str(tool.invoke(call["args"]))
             )
             tool_msgs.append(ToolMessage(content=content, tool_call_id=call["id"]))
-        messages = [*messages, *tool_msgs]
+        messages = [*messages, res, *tool_msgs]  # tool 消息必须跟随带 tool_calls 的 assistant 消息
         res = llm_with_tools.invoke(messages)
     return res
 

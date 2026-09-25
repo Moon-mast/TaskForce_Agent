@@ -137,7 +137,7 @@ def test_agents_md_missing_placeholder(monkeypatch):
 
 def test_load_agents_md_missing_file_placeholder():
     """load_agents_md 对不存在的路径返回占位提示。"""
-    assert "未提供 agents.md" in load_agents_md("__不存在的文件__.md")
+    assert "未提供 BACKEND.md" in load_agents_md("__不存在的文件__.md")
 
 
 def test_load_agents_md_reads_existing_file(tmp_path):
@@ -210,6 +210,23 @@ def test_answer_runs_memory_tool_loop(monkeypatch):
     assert any("用户偏好简洁回答" in m.content for m in llm.calls[1] if isinstance(m, ToolMessage))
     # 工具结果不进主图 state(仅本轮消息流,不污染后续固定 system)
     assert len(result["messages"]) == 1
+
+
+def test_answer_tool_loop_appends_assistant_before_toolmessage(monkeypatch):
+    """工具循环回填时,必须先追加带 tool_calls 的 AIMessage、再跟对应 ToolMessage:
+    OpenAI 协议要求 role=tool 前面是同 id 的 assistant(tool_calls)消息——
+    2026-09-25 真机实测:漏 AIMessage 时 API 400(tool 消息无处依附)。
+    fake 模型不校验协议,故此用例直接断言消息序列结构。"""
+    fake = FakeStore([])
+    monkeypatch.setattr("agent.memory_ctx._default_store", lambda: fake)
+    llm = FakeMemoryLLM()
+    answer_node(_state("现在几点"), llm)
+    second = llm.calls[1]
+    for i, m in enumerate(second):
+        if isinstance(m, ToolMessage):
+            prev = second[i - 1]
+            assert isinstance(prev, AIMessage), "ToolMessage 前必须是带 tool_calls 的 AIMessage"
+            assert any(c["id"] == m.tool_call_id for c in prev.tool_calls)
 
 
 def test_answer_memory_loop_capped(monkeypatch):

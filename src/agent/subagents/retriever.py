@@ -21,6 +21,7 @@ from agent.contracts import ResultSummary, SubgraphContract
 from agent.subagents.react import ReactState, build_react_subgraph, extract_answer
 from settings.loader import load_prompt
 from tools.rag.kb_search import hit_key, make_kb_search
+from tools.tool.clock import get_current_time
 
 MAX_ITERATIONS = 5  # 工具执行轮数上限(每轮≈2 super-steps;主图 recursion_limit 兜底)
 
@@ -99,7 +100,7 @@ def build_retriever_graph(llm, search_backend=None) -> CompiledStateGraph:
 
     return build_react_subgraph(
         llm=llm,
-        tools=[kb_tool],
+        tools=[kb_tool, get_current_time],
         system_prompt=system_prompt,
         max_iterations=MAX_ITERATIONS,
         build_summary=build_summary,

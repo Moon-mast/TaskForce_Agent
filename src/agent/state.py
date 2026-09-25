@@ -26,5 +26,6 @@ class AgentState(TypedDict):
     messages:Annotated[list,add_messages]
     last_route:dict  # 路由决策 model_dump(存 dict 避免 msgpack 自定义类型告警)
     subagent_results:Annotated[list,_add_or_reset]
+    plan:dict|None # 计划=todolist 运行时快照(None=无进行中计划;存 dict 同 last_route 先例)
 
 
