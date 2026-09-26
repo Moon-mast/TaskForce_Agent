@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     llm_model: str
     llm_input_price_per_m: float = 0.0
     llm_output_price_per_m: float = 0.0
+    # 思考模式:adaptive / enabled / disabled(作用于 answer/子智能体)。
+    # supervisor 路由固定用 disabled 实例:DeepSeek 思考模式不支持强制 tool_choice,
+    # with_structured_output 会 400(见 build.py)
+    llm_thinking: str = "disabled"
 
     # Embedding(智谱,04 模块才用,允许为空)
     embedding_base_url: str = ""

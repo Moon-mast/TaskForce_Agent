@@ -25,6 +25,7 @@ dependencies = [
     "docling>=2.128.0",
     "e2b-code-interpreter>=2.10.0",
     "langgraph-cli[inmem]>=0.4.31",
+    "trafilatura>=2.2.0",
 ]
 
 [project.optional-dependencies]

@@ -62,13 +62,20 @@ def _resume_confirm(ctx: ReplContext, renderer: StreamRenderer,
         renderer.new_turn()
         renderer.start_status("处理确认结果…")
         try:
-            final = run_turn(ctx.graph, ctx.graph_config, resume=arg in ("yes", "y"),
-                             on_token=renderer.on_token, on_route=renderer.on_route)
+            final = run_turn(
+                    ctx.graph,
+                    ctx.graph_config,
+                    resume=arg in ("yes", "y"),
+                    on_token=renderer.on_token,
+                    on_route=renderer.on_route,
+                )
         finally:
-            # 与其他分支同款清理:挂起/异常路径都必须收掉 Live 与 Spinner(06 #4)
-            renderer.finish()
+            # 与其他分支同款清理:挂起/异常路径都必须收掉 Spinner(06 #4)
+            streamed = renderer.finish()
         if final:
             ctx.usage.record(final)
+            if not streamed:
+                renderer.render_final(final.content or "")
     return True
 
 
@@ -94,13 +101,20 @@ def _resume_ask(ctx: ReplContext, renderer: StreamRenderer, commands: dict,
         renderer.new_turn()
         renderer.start_status("思考中…")
         try:
-            final = run_turn(ctx.graph, ctx.graph_config, resume=answer,
-                             on_token=renderer.on_token, on_route=renderer.on_route)
+            final = run_turn(
+                    ctx.graph,
+                    ctx.graph_config,
+                    resume=answer,
+                    on_token=renderer.on_token,
+                    on_route=renderer.on_route,
+                )
         finally:
-            # 挂起返回 None 时也必须收掉 Live/Spinner,否则吞终端回显(盲打,06 #4)
-            renderer.finish()
+            # 挂起返回 None 时也必须收掉 Spinner,否则吞终端回显(盲打,06 #4)
+            streamed = renderer.finish()
         if final:
             ctx.usage.record(final)
+            if not streamed:
+                renderer.render_final(final.content or "")
     return True
 
 def _resume_plan(ctx: ReplContext, renderer: StreamRenderer,
@@ -118,13 +132,20 @@ def _resume_plan(ctx: ReplContext, renderer: StreamRenderer,
         renderer.new_turn()
         renderer.start_status("处理确认结果…")
         try:
-            final = run_turn(ctx.graph, ctx.graph_config, resume=answer,
-                             on_token=renderer.on_token, on_route=renderer.on_route)
+            final = run_turn(
+                    ctx.graph,
+                    ctx.graph_config,
+                    resume=answer,
+                    on_token=renderer.on_token,
+                    on_route=renderer.on_route,
+                )
         finally:
-            # 与其他恢复分支同款清理:挂起/异常路径都必须收掉 Live 与 Spinner
-            renderer.finish()
+            # 与其他恢复分支同款清理:挂起/异常路径都必须收掉 Spinner
+            streamed = renderer.finish()
         if final:
             ctx.usage.record(final)
+            if not streamed:
+                renderer.render_final(final.content or "")
     return True
 
 def _auto_summary_worker(ctx: ReplContext, renderer: StreamRenderer,
@@ -139,6 +160,13 @@ def _auto_summary_worker(ctx: ReplContext, renderer: StreamRenderer,
         wake.wait()
         wake.clear()
         if not (ctx.tasks and ctx.tasks.has_done(ctx.thread_id)):
+            continue
+        # plan+ask 并发保护:会话有未处理挂起时,普通 inputs 会把挂起图当新轮重启,
+        # ask 挂起被弃——跳过本轮,结果留在任务表,用户处理挂起后的下一轮 drain 闭环
+        if getattr(ctx.graph.get_state(ctx.graph_config), "interrupts", None):
+            ctx.console.print(
+                "[dim](计划批次完成,但会话有未处理的挂起,先处理挂起再自动汇总)[/dim]"
+            )
             continue
         with turn_lock:
             # 清掉当前输入提示行:用户已敲未提交的字符仍在内核输入缓冲,回车照常提交
@@ -165,8 +193,9 @@ def main() -> None:
     turn_lock = threading.Lock()  # 用户轮与自动汇总轮互斥(优先级:用户询问优先)
     wake = threading.Event()      # 任务完成事件(TaskManager.on_done 唤醒 watcher)
     llm = make_llm(settings)
+    routeLlm = make_llm(settings, thinking="disabled")  # 路由固定关思考:DeepSeek 思考模式不支持强制 tool_choice
     tasks = TaskManager(llm, on_done=wake.set)  # 异步派发:完成即唤醒主动汇总
-    graph = build_graph(llm, checkpointer, tasks=tasks)
+    graph = build_graph(llm, checkpointer, tasks=tasks, routeLlm=routeLlm)
     sessions = SessionStore()
     usage = UsageTracker(settings)
     # 每次启动开新会话(2026-09-04 用户决议,替代 02 的"重启自动接上");
@@ -237,8 +266,8 @@ def main() -> None:
                 handler(args, ctx)
             continue
 
-        if turn_lock.locked():  # watcher 正在自动汇总:排队等待,给用户一句提示
-            console.print("[dim](后台汇总进行中,完成后处理你的问题…)[/dim]")
+        if turn_lock.locked():  # watcher 正在汇总/推进计划:排队等待,给用户一句提示
+            console.print("[dim](计划推进/汇总进行中,你的问题已排队,完成后自动处理…)[/dim]")
         # renderer/usage 与 watcher 自动汇总轮互斥:全程持锁(new_turn 到 finish 原子)
         with turn_lock:
             renderer.new_turn()

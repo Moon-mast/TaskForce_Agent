@@ -48,6 +48,17 @@ def load_skill(name: str) -> str:
 
 
 @tool
+def load_skill_reference(name: str, filename: str) -> str:
+    """读取 skill 目录内的引用文件(相对该 skill 目录,如 references/xxx.md)。
+    SKILL.md 指示"读 references/…"时用本工具;禁止用 read_file——那读的是远程沙箱工作区,
+    本机 skill 文件不在那里。"""
+    try:
+        return SkillRegistry().load_skill_reference(name, filename)
+    except Exception as e:
+        return f"读取失败:{e}"
+
+
+@tool
 def get_tool_detail(name: str) -> str:
     """查看 MCP 工具的完整参数 schema。不确定 MCP 工具参数怎么传时先查。"""
     try:
@@ -59,9 +70,15 @@ def get_tool_detail(name: str) -> str:
 def _gather_tools() -> list:
     """装配工具集:内置 + 元工具 + MCP(发现失败降级为空,不阻塞装配;重名加前缀)。"""
     base = [
-        read_file, write_file, list_files, execute_python,
-        load_skill, get_tool_detail, get_current_time,
-    ]
+            read_file,
+            write_file,
+            list_files,
+            execute_python,
+            load_skill,
+            load_skill_reference,
+            get_tool_detail,
+            get_current_time,
+        ]
     out = list(base)
     names = {t.name for t in out}
     try:

@@ -50,20 +50,28 @@ def _render_evidence(r: ResultSummary) -> list[str]:
 
     hits = data.get("hits")
     results = data.get("results")
+    fetches = data.get("fetches")
     if isinstance(hits, list):
         for h in hits[:EVIDENCE_ITEMS_MAX]:
             if not isinstance(h, dict):
                 continue
             name = h.get("filename") or h.get("doc_id") or "?"
             items.append(f"《{name}》#{h.get('seq', '?')}:{_brief(h.get('content'))}")
-    elif isinstance(results, list):
+    if isinstance(results, list):
         for h in results[:EVIDENCE_ITEMS_MAX]:
             if not isinstance(h, dict):
                 continue
             items.append(
                 f"{_brief(h.get('title'), 80)}({h.get('url', '')}):{_brief(h.get('snippet'))}"
             )
-    else:
+    if isinstance(fetches, list):
+        # web_fetch 抓取正文节选(2026-09-25):无此分支时正文进 data 但 answer 看不到,
+        # 汇总只能基于 100 字 conclusion——"只回收了开头片段"的根因之一
+        for f in fetches[:EVIDENCE_ITEMS_MAX]:
+            if not isinstance(f, dict):
+                continue
+            items.append(f"网页正文({_brief(f.get('url'), 80)}):{_brief(f.get('excerpt'), 600)}")
+    if not items:
         for k, v in data.items():
             if isinstance(v, (str, int, float)):
                 items.append(f"{k}={_brief(v)}")

@@ -66,6 +66,16 @@ class SkillRegistry:
             raise SkillError(f"skill 不存在:{name}")
         return f.read_text(encoding="utf-8")
 
+    def load_skill_reference(self, name: str, filename: str) -> str:
+        """读 skill 目录内的引用文件(如 references/xxx.md);越界与缺失抛 SkillError。"""
+        skill_dir = (self.root / name).resolve()
+        target = (skill_dir / filename).resolve()
+        if not target.is_relative_to(skill_dir):
+            raise SkillError(f"路径越界,禁止访问:{filename}")
+        if not target.is_file():
+            raise SkillError(f"引用文件不存在:{filename}")
+        return target.read_text(encoding="utf-8")
+
     def _parse_skill_dir(self, d: Path) -> dict | None:
         f = d / "SKILL.md"
         if not f.is_file():

@@ -34,3 +34,43 @@
 - **解决**:`messages = [*messages, res, *tool_msgs]`(answer.py:119);`tests/test_memory_inject.py::test_answer_tool_loop_appends_assistant_before_toolmessage` 断言每个 ToolMessage 前紧邻同 tool_call_id 的 AIMessage。
 - **关联**:`agent/answer.py`(`_answer_with_memory`)、`tools/tool/clock.py`、ADR-0011。
 - **教训**:fake 模型不校验 OpenAI 协议,消息序列错了也能全绿——**协议类约束(消息结构、tool 消息依附关系)要在测试里显式断言序列结构**,不能只断言"某类消息出现过"。这是本模块第二个"fake 绕过真实约束"的盲区(坑 1 的 task_id 同型)。
+
+## 5. answer 流式 Live 全量重绘:长内容超终端高度 → 滚屏堆叠
+
+- **现象**:长 markdown 回答(几十行)流式渲染时,"标题+结论段"每帧重复、内容逐帧增长堆叠;短回答从未暴露。
+- **根因**:rich Live(vertical_overflow="visible")以 12fps 对全量 buf 重绘;rich 源码中 visible **不裁剪内容**,光标回退按上一帧完整高度发光标上移——超过终端高度时被钳制在屏幕顶,滚入 scrollback 的历史行永远擦不掉 → 每帧全量重打一遍。短回答(单屏内)不触发,长回答必然。
+- **解决**:弃 Live。演进两步:先打字机直写(无格式)→ 最终**块级增量渲染**(空行为块边界、``` 围栏内不断块;新完成的段落序列以 Markdown 静态打印一次,游标 `_renderedChars` 保证不重绘;未闭合尾块等闭合或 finish)。trade-off:尾块在闭合前不显示。
+- **关联**:`src/cli/streaming.py`(`StreamRenderer._flushCompleteBlocks`)。
+- **教训**:Live 重绘只适合"高度有界"的内容;长回答要用增量静态打印——每段只打一次,而不是反复擦写。
+
+## 6. answer 工具循环的多轮 token 全进对话流 → 渲染缓冲拼接多份回答
+
+- **现象**:与坑 5 叠加,重复内容更严重;根因独立(即使不超屏也存在)。
+- **根因**:`make_llm` 的 `streaming=True` 使 `.invoke()` 也走流式;`_answer_with_memory` 最多 1+4 次 invoke,每轮是独立 run——graph.stream 的 messages 流对**每个 run 的每个 token** 发回调;service 白名单只按节点过滤,answer 所有轮的 token 都进渲染缓冲 → 模型拿到工具结果后重写作答,缓冲里是多份结构复现的回答。
+- **解决**:service 白名单处对 `chunk.tool_calls` 非空的中间帧 `continue`(不进 on_token、不进 final);收尾轮无 tool_calls,正常显示。
+- **关联**:`src/agent/service.py`(run_turn 白名单)、`src/agent/answer.py`(`_answer_with_memory`)。
+- **教训**:节点内多次 LLM 调用 = messages 流里多个 run;流式消费方必须按"带 tool_calls 的中间帧"过滤,否则多轮输出在渲染层拼接。
+
+## 7. rich Markdown 把段落内单换行折叠为空格 → 计划快照挤成一行
+
+- **现象**:计划推进快照(多行 ☑/▶ 列表)显示为一行连排。
+- **根因**:快照消息经 render_final → rich Markdown;CommonMark 段落内单 `\n` 是 softbreak → 渲染为空格;快照无空行、无列表标记 → 整体一个段落被压平。
+- **解决**:`Plan.snapshot()` 改 Markdown 兼容格式(标题独立段 + 每步 `- ☑ …` 列表项——列表项是硬换行;digest 内换行压平)。
+- **关联**:`src/agent/contracts/plan.py`(snapshot)、`src/cli/streaming.py`(render_final)。
+- **教训**:多行纯文本快照不能直接走 Markdown 渲染——要么 Markdown 化(列表/空行分段),要么走 Text 渲染。
+
+## 8. research finalize 只认 web_search 产出 → 纯 web_fetch 任务被误判"联网未检索到"
+
+- **现象**:"读取并总结 URL"任务:模型正确调 web_fetch 抓到 8358 字正文(直接调用验证正常),finalize 却判 need_clarification("联网未检索到相关信息"),正文与模型总结全被丢弃。
+- **根因**:`build_summary` 的"无结果"判定只看 `_collect_results`/`_sources_of`(仅解析 web_search 的 ToolMessage);web_fetch 的 ToolMessage(非 JSON)被跳过 → sources 空 → 硬判无结果。工具对、**收集器没跟上新工具**。
+- **解决**:新增 `_collectFetches`(解析 "[网页正文 | url…" 成功条目,正文节选 2000 字进 `data["fetches"]`);"无结果"判定改为检索与抓取双空;fetch 的 url 并入 sources;`answer._render_evidence` 补 fetches 渲染分支(此前正文节选进 data 但 answer 看不到)。
+- **关联**:`src/agent/subagents/research.py`(build_summary)、`src/agent/answer.py`(_render_evidence)、`src/tools/webfetch/fetch.py`。
+- **教训**:子图 finalize 的"结果收集器"与工具清单是耦合的——**新增工具必须同步扩展收集器与状态判定**,否则工具成功、任务仍被判失败。
+
+## 9. 子智能体收尾协议是散文,extract_answer 只认 JSON/100 字 fallback → 长总结被削成开头一句
+
+- **现象**:answer 汇总"只回收了开头的结论片段"——research success,但总结只剩 100 字、key_points 为空。
+- **根因**:research.md/executor.md 的收尾要求是"一段自然语言总结"(散文),而 `extract_answer` 优先解析严格 JSON,散文走 fallback(折叠空白截 100 字进 conclusion、key_points=[])。conclusion 的 100 字契约上限(03 冻结的"一句话结论")本身没错,错在**提示词与提取器脱节**——提取器早就"优先解析 JSON",提示词却让模型写散文。
+- **解决**:两个收尾要求改为严格 JSON({"conclusion" ≤100 字、"key_points" ≤5 条可写长承载完整总结});配套坑 8 的 fetches 渲染。
+- **关联**:`src/agent/subagents/react.py`(extract_answer)、`src/prompts/subagents/research.md`、`executor.md`、`src/agent/answer.py`。
+- **教训**:提示词要求的输出形态必须与下游解析器对齐——两头各说各话时,fallback 会静默吞掉大部分内容且不报错。

@@ -105,11 +105,15 @@ class Plan(BaseModel):
         return all(s.status in ("done", "failed", "skipped") for s in self.steps)
 
     def snapshot(self) -> str:
-        """进度快照文本(REPL/API 直接嵌消息展示,零新机制)。"""
-        lines = [f"📋 计划:{self.goal}"]
+        """进度快照(Markdown 兼容:列表项才是硬换行,标题独立段)。
+
+        渲染两用:消息流经 rich Markdown(段落内单换行会被折叠成空格,
+        2026-09-25 实测快照挤成一行);interrupt 的 Panel 走纯文本,列表前缀无害。
+        digest 内的换行替换为空格,防列表项断裂。"""
+        lines = [f"📋 计划:{self.goal}", ""]
         for s in self.steps:
-            tail = f" —— {s.result_digest}" if s.result_digest else ""
-            lines.append(f"  {_MARKS[s.status]} {s.id} {s.title}({s.assignee}){tail}")
+            digest = (" —— " + s.result_digest.replace("\n", " ")) if s.result_digest else ""
+            lines.append(f"- {_MARKS[s.status]} {s.id} {s.title}({s.assignee}){digest}")
         return "\n".join(lines)
 
 class PlanDraft(BaseModel):

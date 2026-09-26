@@ -60,6 +60,28 @@ def test_load_skill_missing_raises(registry):
         registry.load_skill("nope")
 
 
+def test_load_skill_reference_ok(registry, tmp_path):
+    """引用文件正常读取:skill 目录内的 references/xxx.md 全文返回。"""
+    _make_skill(tmp_path, "hello-world", GOOD)
+    ref = tmp_path / "hello-world" / "references"
+    ref.mkdir()
+    (ref / "guide.md").write_text("阶段指引", encoding="utf-8")
+    assert registry.load_skill_reference("hello-world", "references/guide.md") == "阶段指引"
+
+
+def test_load_skill_reference_traversal_rejected(registry, tmp_path):
+    """路径穿越(.env / 任意本机文件)必须拒绝——给 LLM 暴露本地读取的前置条件。"""
+    _make_skill(tmp_path, "hello-world", GOOD)
+    with pytest.raises(SkillError, match="越界"):
+        registry.load_skill_reference("hello-world", "../../.env")
+
+
+def test_load_skill_reference_missing_raises(registry, tmp_path):
+    _make_skill(tmp_path, "hello-world", GOOD)
+    with pytest.raises(SkillError, match="不存在"):
+        registry.load_skill_reference("hello-world", "references/nope.md")
+
+
 # ---------- T2:元数据渲染进 supervisor 提示词 ----------
 
 

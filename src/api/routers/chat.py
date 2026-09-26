@@ -148,8 +148,9 @@ def _get_app():
                 settings = get_settings()
                 checkpointer = get_checkpointer(settings.database_url)
                 llm = make_llm(settings)
+                routeLlm = make_llm(settings, thinking="disabled")  # 路由固定关思考
                 tasks = TaskManager(llm)
-                graph = build_graph(llm, checkpointer, tasks=tasks)
+                graph = build_graph(llm, checkpointer, tasks=tasks, routeLlm=routeLlm)
                 _app = (graph, checkpointer, UsageTracker(settings), tasks)
     return _app
 

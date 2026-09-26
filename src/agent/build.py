@@ -24,13 +24,20 @@ from agent.tasks import TaskManager
 from settings.config import get_settings
 
 
-def make_llm(settings=None) -> ChatOpenAI:
+def make_llm(settings=None, thinking: str | None = None) -> ChatOpenAI:
     """把 .env 配置装配成 ChatOpenAI(豆包 OpenAI 兼容)。
 
-    extra_body 显式关闭深度思考:seed 系模型默认开思考,首 token 要等想完(~8s);
-    关掉后延迟降一个量级。换非思考模型时此参数被忽略,保留无害。
+    thinking:adaptive / enabled / disabled,None 时读 settings.llm_thinking。
+    supervisor 的结构化路由固定传 "disabled"——DeepSeek 思考模式不支持强制
+    tool_choice(with_structured_output 底层会 400),且路由是高频低延迟节点,
+    深度思考对路由决策无益;reasoning_effort 仅在思考模式下携带。
+    换非豆包/非 DeepSeek 模型时 extra_body 被忽略,保留无害。
     """
     s = settings or get_settings()
+    thinkingMode = thinking or s.llm_thinking
+    extraBody = {"thinking": {"type": thinkingMode}}
+    if thinkingMode != "disabled":
+        extraBody["reasoning_effort"] = "high"
     return ChatOpenAI(
         base_url=s.llm_base_url,
         api_key=s.llm_api_key,
@@ -40,13 +47,16 @@ def make_llm(settings=None) -> ChatOpenAI:
         max_retries=3,
         timeout=60,
         stream_usage=True,
-        extra_body={"thinking": {"type": "disabled"}},
+        extra_body=extraBody,
     )
 
 
-def build_graph(llm, checkpointer=None, tasks=None):
+def build_graph(llm, checkpointer=None, tasks=None, routeLlm=None):
     """CLI 与 API 共用的唯一构建入口;三个子图经共享注册表装配后直挂 add_node
     (c7:与 TaskManager 后台 invoke 取同一批编译实例,不再双份装配)。
+
+    routeLlm:supervisor 路由专用 LLM,缺省复用 llm;生产入口应传 thinking=disabled
+    的实例——DeepSeek 思考模式不支持强制 tool_choice,路由会 400(见 make_llm)。
 
     异步派发(方案 A):TaskManager 随图构建(测试可注入 fake),supervisor 的
     dispatch 分支提交后台任务、结果经 supervisor 每轮回收注入(主图同步 Send
@@ -54,7 +64,8 @@ def build_graph(llm, checkpointer=None, tasks=None):
     """
     b = StateGraph(state_schema=AgentState)
     tasks = tasks or TaskManager(llm)
-    b.add_node("supervisor", lambda s, config: route_node(s, llm, tasks=tasks, config=config))
+    routeLlm = routeLlm or llm
+    b.add_node("supervisor", lambda s, config: route_node(s, routeLlm, tasks=tasks, config=config))
     b.add_node("answer", lambda s: answer_node(s, llm))
     b.add_node("ask", ask_node)
     b.add_node("memory", lambda s: memory_node(s, llm))

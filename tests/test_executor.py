@@ -137,11 +137,19 @@ def test_partial_when_iteration_limit(monkeypatch):
 
 
 def test_gather_tools_builtin_set(monkeypatch):
-    """MCP 降级为空时,装配结果恰为 7 个内置工具(含 get_current_time 时钟)。"""
+    """MCP 降级为空时,装配结果恰为 8 个内置工具(含时钟与 skill 引用读取)。"""
     monkeypatch.setattr(ex, "MCPToolProvider", FakeEmptyMCP)
     names = {t.name for t in _gather_tools()}
-    assert names == {"read_file", "write_file", "list_files", "execute_python",
-                     "load_skill", "get_tool_detail", "get_current_time"}
+    assert names == {
+            "read_file",
+            "write_file",
+            "list_files",
+            "execute_python",
+            "load_skill",
+            "load_skill_reference",
+            "get_tool_detail",
+            "get_current_time",
+        }
 
 
 def test_tool_layer_uses_sandbox_client(monkeypatch):

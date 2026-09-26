@@ -16,4 +16,4 @@ from agent.build import build_graph, make_llm
 
 def make_studio_graph():
     """无参图工厂:平台负责注入 configurable 与持久化,这里只做装配。"""
-    return build_graph(make_llm())
+    return build_graph(make_llm(), routeLlm=make_llm(thinking="disabled"))

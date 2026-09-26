@@ -51,9 +51,13 @@ def run_turn(graph, config, text=None, resume=None, on_token=None, on_route=None
                 # 并吞掉后续 console.input 的回显(挂起态盲打)。
                 if meta.get("langgraph_node") in {"answer", "ask"}:
                     if isinstance(chunk, AIMessageChunk):
+                        if getattr(chunk, "tool_calls", None):
+                            # 工具循环中间帧(带 tool_calls 的输出):不进对话流也不进
+                            # final——否则多轮回答在渲染缓冲里拼接成重复内容(实测坑)
+                            continue
                         if on_token and chunk.content:
                             on_token(chunk.content)
-                        final=chunk if final is None else final+chunk
+                        final = chunk if final is None else final + chunk
             else:
                 for node,update in payload.items():
                     if node=="__interrupt__":
