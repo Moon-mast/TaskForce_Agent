@@ -11,8 +11,8 @@
 # MCP 服务器配置:headers/env 里带真实密钥与内网地址(示例见 mcp_config.example.json)
 /mcp_config.json
 
-# 用户个人背景:常写真实姓名/年龄/身份等个人信息,绝不入库(模板见 agents.example.md)
-/agents.md
+# 旧机制"/agents.md 忽略规则"已删(2026-09-27):运行时个人背景已迁到 BACKEND.md(入库,占位符不含真实信息),
+# 且 Windows 大小写不敏感,该规则会误伤必须入库的开发指令文件 AGENTS.md(两者不能同名共存)。
 
 # 本地状态目录:.taskforce/ 存当前会话与模型覆盖(settings/session.py、model_overrides.py)
 /.taskforce/
