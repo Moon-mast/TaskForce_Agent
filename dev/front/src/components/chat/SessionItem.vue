@@ -11,7 +11,7 @@ const props = defineProps<{
   timeText: string
 }>()
 
-const emit = defineEmits<{ select: [threadId: string] }>()
+const emit = defineEmits<{ select: [threadId: string]; remove: [threadId: string] }>()
 
 const shortId = computed(() => props.threadId.replace(/^sess-/, '').slice(0, 8))
 </script>
@@ -36,25 +36,40 @@ const shortId = computed(() => props.threadId.replace(/^sess-/, '').slice(0, 8))
         </span>
       </span>
     </button>
+    <button
+      type="button"
+      class="session__del"
+      title="删除会话"
+      aria-label="删除会话"
+      :data-testid="`session-delete-${threadId}`"
+      @click.stop="emit('remove', threadId)"
+    >
+      ×
+    </button>
   </li>
 </template>
 
 <style scoped>
 .session {
+  position: relative;
   list-style: none;
 }
 
+/* 主按钮右侧预留删除钮空间,避免短 id 与 × 重叠 */
 .session__btn {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-2);
   width: 100%;
-  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-1);
+  padding: var(--sp-2) 22px var(--sp-2) var(--sp-1);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--r-md);
   text-align: left;
   cursor: pointer;
+  transition:
+    background var(--t-fast),
+    border-color var(--t-fast);
 }
 
 .session__btn:hover {
@@ -133,5 +148,41 @@ const shortId = computed(() => props.threadId.replace(/^sess-/, '').slice(0, 8))
 .session__btn:focus-visible .session__id,
 .session__btn--active .session__id {
   opacity: 1;
+}
+
+/* 删除钮:悬停/聚焦该行才显形;@click.stop 防止触发切换 */
+.session__del {
+  position: absolute;
+  top: 50%;
+  right: var(--sp-1);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-md);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--t-fast),
+    background var(--t-fast),
+    color var(--t-fast);
+}
+
+.session:hover .session__del,
+.session__del:focus-visible {
+  opacity: 1;
+}
+
+.session__del:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
 }
 </style>

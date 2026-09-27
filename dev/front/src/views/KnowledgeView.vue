@@ -156,10 +156,10 @@ onBeforeUnmount(() => {
 .view {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-5);
   width: min(var(--measure-page), 100%);
   margin: 0 auto;
-  padding: var(--sp-4);
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
 }
 
 .view__head {
@@ -171,6 +171,7 @@ onBeforeUnmount(() => {
 
 .view__title {
   font-size: var(--fs-xl);
-  font-weight: 600;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.01em;
 }
 </style>

@@ -10,6 +10,7 @@ import type {
   ConfirmRequest,
   SummaryRequest,
   TaskStatusResponse,
+  ThreadDeleteResult,
   ThreadListResponse,
   ThreadMessagesResponse,
   ThreadMetaResponse,
@@ -31,6 +32,13 @@ export function listThreadsMeta(): Promise<ThreadMetaResponse> {
 /** GET /chat/threads/{thread_id}/messages — 历史消息回填(§2.1.6)。 */
 export function listThreadMessages(threadId: string): Promise<ThreadMessagesResponse> {
   return request<ThreadMessagesResponse>(`/chat/threads/${encodeURIComponent(threadId)}/messages`)
+}
+
+/** DELETE /chat/threads/{thread_id} — 删除会话(§2.1.10):有未完成任务时 400。 */
+export function removeThread(threadId: string): Promise<ThreadDeleteResult> {
+  return request<ThreadDeleteResult>(`/chat/threads/${encodeURIComponent(threadId)}`, {
+    method: 'DELETE',
+  })
 }
 
 /** GET /chat/tasks — 后台任务 peek(非消费,§2.1.7;useTaskWatch 轮询用)。 */
@@ -65,6 +73,15 @@ export function submitConfirm(
   signal?: AbortSignal,
 ): Promise<void> {
   return sseFetch('/chat/confirm', body, handlers, signal)
+}
+
+/** POST /chat/plan — plan 计划确认挂起恢复(SSE,§2.1.9):'y' 执行,其他取消。 */
+export function submitPlan(
+  body: AnswerRequest,
+  handlers: SseHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  return sseFetch('/chat/plan', body, handlers, signal)
 }
 
 /** POST /chat/summary — 后台任务全批完成后的自动汇总轮(SSE,§2.1.8)。 */

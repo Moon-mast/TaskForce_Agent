@@ -79,21 +79,37 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
+  padding: var(--sp-4);
+  background: rgba(15, 17, 21, 0.45);
+  backdrop-filter: blur(2px);
 }
 
 .dialog {
-  width: min(420px, calc(100% - var(--sp-6)));
-  padding: var(--sp-4);
+  width: min(420px, 100%);
+  padding: var(--sp-5);
   background: var(--bg-panel);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
   box-shadow: var(--shadow-pop);
+  animation: dialog-in var(--t-base);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog {
+    animation: none;
+  }
 }
 
 .dialog__title {
   font-size: var(--fs-lg);
-  font-weight: 600;
+  font-weight: var(--fw-strong);
 }
 
 .dialog__message {

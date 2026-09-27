@@ -25,6 +25,8 @@ function stepLabel(route: RoutePayload): string {
       return '需要补充信息'
     case 'memory':
       return '记忆写入'
+    case 'plan':
+      return '制定调研计划'
     default:
       return route.next
   }

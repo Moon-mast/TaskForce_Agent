@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
-import { listThreadMessages, listThreadsMeta } from '@/api/chat'
+import { listThreadMessages, listThreadsMeta, removeThread } from '@/api/chat'
 import { readCurrentThreadId } from '@/composables/useLocalStore'
 import { useUiStore } from '@/stores/ui'
 import { createFakeStorage } from '@/test-utils/fakeStorage'
@@ -12,10 +12,12 @@ import { titleFromText, useChatStore } from './chat'
 vi.mock('@/api/chat', () => ({
   listThreadsMeta: vi.fn(),
   listThreadMessages: vi.fn(),
+  removeThread: vi.fn(),
 }))
 
 const mockMeta = vi.mocked(listThreadsMeta)
 const mockMessages = vi.mocked(listThreadMessages)
+const mockRemoveThread = vi.mocked(removeThread)
 
 const A = 'sess-aaaa1111'
 const B = 'sess-bbbb2222'
@@ -44,6 +46,7 @@ beforeEach(() => {
   vi.restoreAllMocks()
   mockMeta.mockReset()
   mockMessages.mockReset()
+  mockRemoveThread.mockReset()
 })
 
 describe('loadThreads', () => {
@@ -328,6 +331,26 @@ describe('轮次动作(模块 07)', () => {
     expect(chat.pending).toMatchObject({ sub: 'ask', status: 'waiting' })
   })
 
+  it('plan 挂起:同信封落卡,endTurn 后仍等确认', () => {
+    const chat = useChatStore()
+    chat.beginTurn()
+    chat.appendToken('我把需求拆成了 3 步:')
+    chat.setPending({ kind: 'plan', text: '## 调研计划\n- ☐ s1 检索' })
+    chat.endTurn()
+
+    const last = chat.items[chat.items.length - 1]
+    expect(last).toMatchObject({ kind: 'interrupt', sub: 'plan', status: 'waiting' })
+    expect(chat.pending).toMatchObject({ sub: 'plan', status: 'waiting' }) // 等 y/n,不该被解除
+
+    // 确认提交 → 本轮结束落定 resolved,挂起解除
+    chat.resolvePending({ status: 'submitting', approved: true })
+    chat.beginTurn()
+    chat.pushRoute({ next: 'dispatch', question: null, tasks: [{ agent: 'research', task: 't', reason: 'r' }] })
+    chat.endTurn()
+    expect(chat.pending).toBeNull()
+    expect(last).toMatchObject({ status: 'resolved', approved: true })
+  })
+
   it('attachUsage 按轮首快照做差(进程累计 → 本轮增量)', () => {
     const chat = useChatStore()
     chat.beginTurn()
@@ -534,5 +557,65 @@ describe('会话预热(prefetchRecent)', () => {
     chat.ensureHydrated(A)
     await new Promise((r) => setTimeout(r, 0))
     expect(mockMessages).not.toHaveBeenCalled() // 已有内容:不再请求
+  })
+})
+
+describe('removeThread(删除会话)', () => {
+  it('删除后端会话:调 DELETE,本地元数据与内容缓存清空,列表移除', async () => {
+    mockMeta.mockResolvedValue(metaResponse([B, A]))
+    mockMessages.mockImplementation((id: string) =>
+      Promise.resolve(messagesResponse(id, [{ role: 'user', content: `问题 ${id}` }])),
+    )
+    mockRemoveThread.mockResolvedValue({ ok: true, thread_id: A })
+    const chat = useChatStore()
+    await chat.loadThreads()
+    chat.switchThread(A)
+    await chat.hydrateFromServer(A)
+    expect(chat.threadMeta[A]).toBeDefined()
+
+    await chat.removeThread(A)
+
+    expect(mockRemoveThread).toHaveBeenCalledWith(A)
+    expect(chat.sessionList.map((row) => row.threadId)).toEqual([B])
+    expect(chat.threadMeta[A]).toBeUndefined() // 本地元数据一并清掉
+  })
+
+  it('删除当前会话:切到剩余最近一个', async () => {
+    mockMeta.mockResolvedValue(metaResponse([B, A]))
+    mockMessages.mockResolvedValue(messagesResponse(A, []))
+    mockRemoveThread.mockResolvedValue({ ok: true, thread_id: B })
+    const chat = useChatStore()
+    await chat.loadThreads()
+    chat.switchThread(B)
+
+    await chat.removeThread(B)
+
+    expect(chat.currentThreadId).toBe(A) // 剩余最近(列表首位)
+    expect(readCurrentThreadId()).toBe(A)
+  })
+
+  it('删当前会话且无剩余:自动新建,不残留被删 id', async () => {
+    mockRemoveThread.mockResolvedValue({ ok: true, thread_id: 'sess-local0001' })
+    const chat = useChatStore()
+    const localId = chat.newThread()
+
+    await chat.removeThread(localId)
+
+    expect(chat.currentThreadId).not.toBe(localId)
+    expect(chat.sessionList.map((row) => row.threadId)).toEqual([chat.currentThreadId])
+    expect(chat.threadMeta[localId]).toBeUndefined()
+  })
+
+  it('该会话流式进行中:拒删且不发请求', async () => {
+    const chat = useChatStore()
+    chat.newThread() // 本地会话,补上元数据
+    chat.beginTurn() // 当前会话进入 streaming
+    const id = chat.currentThreadId
+
+    const res = await chat.removeThread(id)
+
+    expect(res).toBe('streaming')
+    expect(mockRemoveThread).not.toHaveBeenCalled()
+    expect(chat.threadMeta[id]).toBeDefined() // 原样保留
   })
 })

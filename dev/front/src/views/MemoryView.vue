@@ -167,21 +167,22 @@ async function confirmDelete(): Promise<void> {
 .view {
   height: 100%;
   min-height: 0;
-  padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
   overflow-y: auto;
 }
 
 .view__inner {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-4);
   width: min(var(--measure-page), 100%);
   margin: 0 auto;
 }
 
 .view__title {
   font-size: var(--fs-xl);
-  font-weight: 600;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.01em;
 }
 
 .view__lead {

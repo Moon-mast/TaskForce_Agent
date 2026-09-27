@@ -104,8 +104,12 @@ function trimZero(v: number): string {
   return v.toFixed(1).replace(/\.0$/, '')
 }
 
-/** 入库时间:后端给带时区偏移的 ISO 8601,这里按浏览器本地时区显示 `MM-DD HH:mm`。 */
-export function fmtDateTime(iso: string): string {
+/**
+ * 入库时间:后端给带时区偏移的 ISO 8601,这里按浏览器本地时区显示 `MM-DD HH:mm`。
+ * 换 rag_v01 内核后 `created_at` 恒为 null(没有文档表),null 直接返回空串,该列留空。
+ */
+export function fmtDateTime(iso: string | null): string {
+  if (iso === null) return ''
   const ts = Date.parse(iso)
   if (!Number.isFinite(ts)) return ''
   const d = new Date(ts)
@@ -123,7 +127,8 @@ export function sortDocsByCreatedAt(docs: readonly KDoc[]): KDoc[] {
   return [...docs].sort((a, b) => tsOf(a.created_at) - tsOf(b.created_at))
 }
 
-function tsOf(iso: string): number {
+function tsOf(iso: string | null): number {
+  if (iso === null) return 0
   const t = Date.parse(iso)
   return Number.isFinite(t) ? t : 0
 }

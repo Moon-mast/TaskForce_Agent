@@ -23,13 +23,14 @@ withDefaults(
   align-items: center;
   justify-content: center;
   gap: var(--sp-1);
-  height: 28px;
+  height: var(--ctl-h-sm);
   padding: 0 var(--sp-3);
   border: 1px solid transparent;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   background: transparent;
   color: var(--text-secondary);
-  font-size: var(--fs-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   line-height: var(--lh-tight);
   white-space: nowrap;
   cursor: pointer;
@@ -37,26 +38,40 @@ withDefaults(
   transition:
     background var(--t-fast),
     color var(--t-fast),
-    border-color var(--t-fast);
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-glow);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn--ghost {
   border-color: var(--border-strong);
+  background: var(--bg-raised);
 }
 
 .btn--ghost:hover:not(:disabled) {
   background: var(--bg-hover);
+  border-color: var(--text-muted);
   color: var(--text-primary);
 }
 
 .btn--primary {
   background: var(--accent);
-  color: var(--text-inverse);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
 }
 
 .btn--primary:hover:not(:disabled) {
@@ -64,11 +79,12 @@ withDefaults(
 }
 
 .btn--danger {
-  border-color: var(--danger);
+  border-color: transparent;
   color: var(--danger);
 }
 
 .btn--danger:hover:not(:disabled) {
   background: var(--danger-soft);
+  border-color: var(--danger);
 }
 </style>

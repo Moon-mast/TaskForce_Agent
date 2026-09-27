@@ -157,6 +157,9 @@ const health = computed(() => ({
   color: var(--text-secondary);
   /* 导航图标禁用文本选区(UI-DESIGN §6.3) */
   user-select: none;
+  transition:
+    background var(--t-fast),
+    color var(--t-fast);
 }
 
 .rail__item:hover,

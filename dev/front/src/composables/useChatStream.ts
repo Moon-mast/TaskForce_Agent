@@ -7,7 +7,7 @@
  */
 import { ref } from 'vue'
 
-import { send, submitAnswer, submitConfirm, summarize } from '@/api/chat'
+import { send, submitAnswer, submitConfirm, submitPlan, summarize } from '@/api/chat'
 import type { SseHandlers } from '@/api/sse'
 import { useChatStore } from '@/stores/chat'
 
@@ -73,6 +73,13 @@ export function useChatStream() {
     await start((h, signal) => submitConfirm({ thread_id: chat.currentThreadId, approved }, h, signal))
   }
 
+  /** 计划确认挂起恢复(POST /chat/plan):'y' 开始执行,其他取消(plan_0.1)。 */
+  async function confirmPlan(text: string): Promise<void> {
+    const t = text.trim()
+    if (t === '' || chat.isStreaming) return
+    await start((h, signal) => submitPlan({ thread_id: chat.currentThreadId, text: t }, h, signal))
+  }
+
   /**
    * 后台任务全批完成后的自动汇总轮(POST /chat/summary,useTaskWatch 触发)。
    * 不插用户气泡:这轮由服务端以 AUTO_NOTICE 触发,不是用户说的话;历史回填也会过滤掉它。
@@ -88,5 +95,5 @@ export function useChatStream() {
     controller.value?.abort()
   }
 
-  return { send: sendText, resend, answer, confirm, summarizeThread, abort }
+  return { send: sendText, resend, answer, confirm, confirmPlan, summarizeThread, abort }
 }

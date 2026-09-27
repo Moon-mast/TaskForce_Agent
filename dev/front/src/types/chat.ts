@@ -5,7 +5,7 @@
 
 /* ---------- 契约镜像:SSE 事件载荷(§三) ---------- */
 
-export type RouteNext = 'answer' | 'ask' | 'memory' | 'dispatch'
+export type RouteNext = 'answer' | 'ask' | 'memory' | 'dispatch' | 'plan'
 
 /** route 事件里的单个子任务(§3.3)。 */
 export interface TaskPayload {
@@ -23,7 +23,7 @@ export interface RoutePayload {
 
 /** interrupt 事件载荷(B3 信封,§3.3):kind 自描述,恢复端点按 kind 选,不靠猜。 */
 export interface InterruptEnvelope {
-  kind: 'ask' | 'memory' | 'unknown'
+  kind: 'ask' | 'memory' | 'plan' | 'unknown'
   text: string
 }
 
@@ -79,6 +79,12 @@ export interface ThreadListResponse {
   threads: string[]
 }
 
+/** DELETE /chat/threads/{thread_id} 响应(§2.1.10):幂等,不存在的会话也 ok。 */
+export interface ThreadDeleteResult {
+  ok: boolean
+  thread_id: string
+}
+
 /** GET /chat/threads/meta 响应(§2.1.5,B2 已落地)。 */
 export interface ThreadMetaResponse {
   threads: ThreadMetaRow[]
@@ -129,7 +135,7 @@ export interface RouteItem extends BaseItem {
 
 export interface InterruptItem extends BaseItem {
   kind: 'interrupt'
-  sub: 'ask' | 'memory' | 'unknown'
+  sub: 'ask' | 'memory' | 'plan' | 'unknown'
   text: string
   status: 'waiting' | 'submitting' | 'resolved' | 'failed'
   /** ask 已答时的回答文本。 */
@@ -159,7 +165,7 @@ export interface TurnState {
 }
 
 export interface PendingInterrupt {
-  sub: 'ask' | 'memory' | 'unknown'
+  sub: 'ask' | 'memory' | 'plan' | 'unknown'
   text: string
   status: InterruptItem['status']
   /** 关联消息数组里的 InterruptItem。 */

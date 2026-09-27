@@ -203,3 +203,35 @@ def test_build_graph_and_tasks_share_instances():
     build_graph(llm, tasks=tasks)
     for name in ("retriever", "research", "executor"):
         assert tasks._subgraph(name) is get_subgraph(llm, name)
+
+
+def test_discard_refuses_while_pending():
+    """discard:pending>0 拒删(台账保留);全批完成后放行,done 未消费结果一并清。"""
+
+    class _BlockingLlm:
+        """invoke 阻塞在 gate 上,保证断言时任务仍在跑(pending>0 窗口可控)。"""
+
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            gate.wait(timeout=5)
+            return AIMessage("子图收尾")
+
+    gate = threading.Event()
+    tm = TaskManager(_BlockingLlm())
+    tm.submit([("research", _contract())], thread_id="sess-x")
+    assert tm.discard("sess-x")["ok"] is False
+    assert tm.status("sess-x")["pending"] == 1  # 台账原样保留,没被误清
+
+    gate.set()
+    assert _wait_batch_done(tm, "sess-x", 1)
+    assert tm.discard("sess-x") == {"ok": True, "pending": 0}
+    assert tm.status("sess-x") == {"pending": 0, "done": 0}
+    assert tm.drain_done("sess-x") == []  # 未消费结果已被丢弃,不会灌进别的会话
+
+
+def test_discard_unknown_thread_is_noop():
+    """discard:不存在的会话幂等放行(前端删本地新建、还没 checkpoint 的会话)。"""
+    tm = TaskManager(_Llm())
+    assert tm.discard("sess-none") == {"ok": True, "pending": 0}

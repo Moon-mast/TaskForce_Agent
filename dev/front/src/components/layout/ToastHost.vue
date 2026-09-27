@@ -32,13 +32,13 @@ const ui = useUiStore()
   align-items: center;
   gap: var(--sp-2);
   max-width: 360px;
-  padding: var(--sp-2) var(--sp-3);
+  padding: 10px var(--sp-4);
   background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-pop);
   color: var(--text-primary);
-  font-size: var(--fs-md);
+  font-size: var(--fs-sm);
   line-height: var(--lh-base);
 }
 

@@ -11,7 +11,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-import { listThreadMessages, listThreadsMeta } from '@/api/chat'
+import { listThreadMessages, listThreadsMeta, removeThread as removeThreadApi } from '@/api/chat'
 import { errText } from '@/api/http'
 import {
   THREAD_META_KEY,
@@ -205,6 +205,30 @@ export const useChatStore = defineStore('chat', () => {
     touchThread(id)
     setCurrent(id)
     if (opts.hydrate !== false) ensureHydrated(id)
+  }
+
+  /**
+   * 删除会话:后端清 checkpoint 与任务台账,本地清元数据与各会话缓存(切回来不串台)。
+   * 该会话流式进行中拒删(后端这一轮还在写它);删当前会话则切到剩余最近一个,没有就新建。
+   * 失败抛错由调用方 toast;'streaming' 表示因流式进行中而未发起请求。
+   */
+  async function removeThread(threadId: string): Promise<'ok' | 'streaming'> {
+    if (turnByThread.value[threadId]?.status === 'streaming') return 'streaming'
+    await removeThreadApi(threadId)
+    local.update((draft) => {
+      delete draft[threadId]
+    })
+    delete itemsByThread.value[threadId]
+    delete pendingByThread.value[threadId]
+    delete turnByThread.value[threadId]
+    delete hydratingByThread.value[threadId]
+    threads.value = threads.value.filter((row) => row.thread_id !== threadId)
+    if (currentThreadId.value === threadId) {
+      const next = sessionList.value[0]?.threadId
+      if (next !== undefined) switchThread(next)
+      else newThread()
+    }
+    return 'ok'
   }
 
   /** 拉取后端会话元数据(B2),后端已按最近活跃排序。 */
@@ -617,6 +641,7 @@ export const useChatStore = defineStore('chat', () => {
     // 动作(模块 06 已实现)
     newThread,
     switchThread,
+    removeThread,
     loadThreads,
     ensureHydrated,
     hydrateFromServer,

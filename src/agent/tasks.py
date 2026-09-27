@@ -80,6 +80,22 @@ class TaskManager:
             done = sum(1 for tid, _ in self._results.values() if tid == thread_id)
             return {"pending": self._pending.get(thread_id, 0), "done": done}
 
+    def discard(self, thread_id: str) -> dict:
+        """删除会话时清理该线程的任务台账(Web 侧删除会话用)。
+
+        pending>0 时拒绝({ok: False, pending}):仍有子任务在跑,清了台账
+        跑完的结果无处安放,计划推进也会悬空;台账原样保留。
+        否则清掉该线程的未消费结果与计数(done 一并丢弃——会话没了,无人消费)。
+        """
+        with self._lock:
+            pending = self._pending.get(thread_id, 0)
+            if pending > 0:
+                return {"ok": False, "pending": pending}
+            self._pending.pop(thread_id, None)
+            for t in [t for t, (tid, _) in self._results.items() if tid == thread_id]:
+                self._results.pop(t)
+            return {"ok": True, "pending": 0}
+
     def _subgraph(self, agent: str):
         """经共享注册表取子图(c7):只缓存实际派发过的;与 build_graph 直挂同批实例。"""
         if agent not in self._subgraphs:

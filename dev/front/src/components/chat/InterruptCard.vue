@@ -7,6 +7,7 @@ import type { InterruptItem } from '@/types/chat'
 
 import AskInterruptCard from './AskInterruptCard.vue'
 import MemoryConfirmCard from './MemoryConfirmCard.vue'
+import PlanConfirmCard from './PlanConfirmCard.vue'
 
 const props = defineProps<{ item: InterruptItem }>()
 const chat = useChatStore()
@@ -15,6 +16,7 @@ const chat = useChatStore()
 <template>
   <AskInterruptCard v-if="props.item.sub === 'ask'" :item="props.item" />
   <MemoryConfirmCard v-else-if="props.item.sub === 'memory'" :item="props.item" />
+  <PlanConfirmCard v-else-if="props.item.sub === 'plan'" :item="props.item" />
   <div v-else class="unknown" data-testid="interrupt-unknown">
     <p class="unknown__title">检测到未知类型的挂起</p>
     <p class="unknown__text">{{ props.item.text }}</p>

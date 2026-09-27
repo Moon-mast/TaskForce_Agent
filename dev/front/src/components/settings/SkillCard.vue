@@ -28,10 +28,21 @@ const emit = defineEmits<{ copy: [dir: string] }>()
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4);
   background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-pop-sm);
+  transform: translateY(-1px);
 }
 
 .card__head {

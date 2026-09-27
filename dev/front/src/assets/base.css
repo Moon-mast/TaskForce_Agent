@@ -19,6 +19,13 @@ body {
   font-size: var(--fs-md);
   line-height: var(--lh-base);
   -webkit-font-smoothing: antialiased;
+  /* 数字等宽对齐:表格里的时间/数量列不跳 */
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
 }
 
 h1,

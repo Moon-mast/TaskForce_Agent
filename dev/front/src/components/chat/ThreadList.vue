@@ -1,17 +1,21 @@
 <script setup lang="ts">
-// 上下文栏会话列表(模块 06):新建 / 切换 / 当前高亮 / 本地标题。
+// 上下文栏会话列表(模块 06):新建 / 切换 / 当前高亮 / 本地标题 / 删除(确认弹窗)。
 // 数据 = 后端 meta(B2,已按最近活跃排序)+ 本地新建但还没 checkpoint 的会话。
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
+import { errText } from '@/api/http'
 import AppButton from '@/components/common/AppButton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import Spinner from '@/components/common/Spinner.vue'
+import ConfirmDialog from '@/components/settings/ConfirmDialog.vue'
 import { useChatStore } from '@/stores/chat'
+import { useUiStore } from '@/stores/ui'
 import { fmtRelative } from '@/utils/time'
 
 import SessionItem from './SessionItem.vue'
 
 const chat = useChatStore()
+const ui = useUiStore()
 
 const rows = computed(() =>
   chat.sessionList.map((row) => ({
@@ -19,6 +23,33 @@ const rows = computed(() =>
     timeText: row.lastActiveAt > 0 ? fmtRelative(row.lastActiveAt) : '',
   })),
 )
+
+// 删除确认:待删会话 id;空串 = 弹窗关闭。busy 期禁用双按钮防重复提交。
+const confirmId = ref('')
+const removing = ref(false)
+const confirmTitle = computed(
+  () => chat.sessionList.find((row) => row.threadId === confirmId.value)?.title || '新会话',
+)
+
+function askRemove(threadId: string): void {
+  confirmId.value = threadId
+}
+
+async function onConfirmRemove(): Promise<void> {
+  const id = confirmId.value
+  if (id === '') return
+  removing.value = true
+  try {
+    const res = await chat.removeThread(id)
+    if (res === 'streaming') ui.toast('该会话正在执行任务,稍后再删除', 'error')
+    else ui.toast('会话已删除')
+  } catch (e) {
+    ui.toast(`删除会话失败:${errText(e)}`, 'error')
+  } finally {
+    removing.value = false
+    confirmId.value = ''
+  }
+}
 
 onMounted(() => {
   void chat.loadThreads()
@@ -56,8 +87,21 @@ onMounted(() => {
         :active="row.threadId === chat.currentThreadId"
         :time-text="row.timeText"
         @select="chat.switchThread($event)"
+        @remove="askRemove"
       />
     </ul>
+
+    <ConfirmDialog
+      :open="confirmId !== ''"
+      title="删除会话"
+      :message="`「${confirmTitle}」的历史消息与后台任务记录将被删除,不可恢复。`"
+      confirm-text="删除"
+      variant="danger"
+      :busy="removing"
+      data-testid="thread-delete-dialog"
+      @confirm="onConfirmRemove"
+      @cancel="confirmId = ''"
+    />
   </div>
 </template>
 

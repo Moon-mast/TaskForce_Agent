@@ -75,14 +75,16 @@ const title = computed(() => TITLES[kind.value])
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  padding: var(--sp-3) var(--sp-3);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .panel__title {
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -93,14 +95,17 @@ const title = computed(() => TITLES[kind.value])
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   background: transparent;
   border: none;
   border-radius: var(--r-sm);
   color: var(--text-muted);
   cursor: pointer;
   user-select: none;
+  transition:
+    background var(--t-fast),
+    color var(--t-fast);
 }
 
 .panel__collapse:hover {

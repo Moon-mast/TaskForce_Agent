@@ -25,21 +25,32 @@ withDefaults(
 <style scoped>
 .input {
   width: 100%;
-  height: 28px;
-  padding: 0 var(--sp-2);
+  height: var(--ctl-h);
+  padding: 0 var(--sp-3);
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   color: var(--text-primary);
   font-size: var(--fs-md);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    background var(--t-fast);
 }
 
 .input::placeholder {
   color: var(--text-muted);
 }
 
+.input:hover:not(:disabled):not(:focus) {
+  border-color: var(--border-strong);
+}
+
 .input:focus {
+  outline: none;
   border-color: var(--border-focus);
+  box-shadow: var(--focus-glow);
+  background: var(--bg-raised);
 }
 
 .input:disabled {

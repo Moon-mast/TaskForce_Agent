@@ -120,6 +120,8 @@ function errText(payload, fallback = '请求失败') {
 | 6 | GET | `/chat/threads/{thread_id}/messages` | 会话历史消息回填【待后端落地 B1】 | JSON |
 | 7 | GET | `/chat/tasks?thread_id=` | 后台任务 peek(非消费,自动汇总轮询用)【2026-09-18 落地】 | JSON |
 | 8 | POST | `/chat/summary` | 后台任务全批完成后的自动汇总轮(SSE)【2026-09-18 落地】 | `text/event-stream` |
+| 22 | POST | `/chat/plan` | plan 计划确认挂起恢复:'y' 执行,其他取消【2026-09-27 落地】 | `text/event-stream` |
+| 23 | DELETE | `/chat/threads/{thread_id}` | 删除会话:清 checkpoint 三表 + 任务台账【2026-09-27 落地】 | JSON |
 | 9 | GET | `/models/config` | 模型配置读取(设置页,api_key 掩码回显)【2026-09-18 落地】 | JSON |
 | 10 | PUT | `/models/config` | 模型配置保存(缺项不动,重启后端生效)【2026-09-18 落地】 | JSON |
 | 11 | GET | `/health` | 存活 + DB + 沙箱自检 | JSON |
@@ -278,6 +280,31 @@ def list_session_meta(saver, limit: int = 50) -> list[dict]:
 - 无待汇总结果时返回 **400**(`该会话没有待汇总的后台任务结果`),防止空转一轮。
 - 触发语不进对话记录:历史回填按 `(系统通知)` 前缀过滤(§2.1.6)。
 - 语义对齐 REPL:用户轮优先(前端在流式期间不发),结果被消费后不重复汇总。
+
+#### 2.1.9 `POST /chat/plan` — plan 计划确认挂起恢复(SSE)【2026-09-27 落地】
+
+请求体(与 `/chat/answer` 同形):
+
+```json
+{ "thread_id": "sess-a1b2c3d4", "text": "y" }
+```
+
+- plan_0.1(ADR-0012)的计划确认挂起恢复:`text='y'` 开始执行,其他任意文本取消——与 REPL 回复语义一致。
+- 批准后 supervisor 确定性推进:按依赖分批异步派发,本流内先出 route 帧(派发清单),后续结果经 §2.1.7 轮询 + §2.1.8 自动汇总轮回收。
+- 挂起类型校验同 `/chat/confirm`(`_require_interrupt(..., "plan")`),无挂起或类型不符返回 **400**。
+
+#### 2.1.10 `DELETE /chat/threads/{thread_id}` — 删除会话【2026-09-27 落地】
+
+响应:
+
+```json
+{ "ok": true, "thread_id": "sess-a1b2c3d4" }
+```
+
+- 后端语义:PostgresSaver 的 `delete_thread`(checkpoints/checkpoint_blobs/checkpoint_writes 三表)+ `TaskManager.discard`(清该线程任务台账,未消费结果一并丢弃)。
+- **400**(`该会话有正在执行的后台任务,完成后再删除`):该线程 `pending > 0` 时拒删——清了台账,跑完的结果无处回收、计划推进悬空。
+- **幂等**:不存在的会话(本地新建还没 checkpoint)同样返回 ok,前端无分支差异。
+- 前端配合:本地元数据/消息缓存/挂起态同步删除;删当前会话切到剩余最近一个,没有则新建;该会话流式进行中前端先行拒删(不发请求)。
 
 ### 2.2 Health 资源
 
@@ -527,6 +554,7 @@ const label = typeof t === 'string' ? t : (t?.name ?? JSON.stringify(t))
 - `POST /chat`(text 驱动)
 - `POST /chat/confirm`(resume=bool 驱动)
 - `POST /chat/answer`(resume=str 驱动)
+- `POST /chat/plan`(resume=str 驱动,'y' 执行/其他取消,§2.1.9)
 
 响应头:`Content-Type: text/event-stream`。
 
@@ -569,7 +597,7 @@ data: {"<事件类型>": <载荷>}\n\n
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `next` | `"answer"` \| `"ask"` | `"memory"` \| `"dispatch"` | 下一跳决策 |
+| `next` | `"answer"` \| `"ask"` | `"memory"` \| `"dispatch"` \| `"plan"` | 下一跳决策(plan_0.1:进入计划起草) |
 | `question` | `string \| null` | `next=ask` 时才有值 |
 | `tasks` | `Task[] \| null` | `next=dispatch` 时才有值;Task = `{agent: "retriever"\|"research"\|"executor", task, reason}` |
 
@@ -589,10 +617,14 @@ data: {"<事件类型>": <载荷>}\n\n
 {"interrupt": {"kind": "memory", "text": "用户偏好中文回复"}}
 ```
 
+```json
+{"interrupt": {"kind": "plan", "text": "## 调研计划\n- ☐ s1 …"}}
+```
+
 | 字段 | 说明 |
 |---|---|
-| `kind` | `"ask"`(ask 节点问询,恢复走 `POST /chat/answer`)\| `"memory"`(memory 写入提案,恢复走 `POST /chat/confirm`)\| `"unknown"`(兜底,禁用输入) |
-| `text` | 问题文本 / 提案原文 |
+| `kind` | `"ask"`(ask 节点问询,恢复走 `POST /chat/answer`)\| `"memory"`(memory 写入提案,恢复走 `POST /chat/confirm`)\| `"plan"`(调研计划确认,恢复走 `POST /chat/plan`,§2.1.9)\| `"unknown"`(兜底,禁用输入) |
+| `text` | 问题文本 / 提案原文 / 计划快照(Markdown 列表) |
 
 后端实现(`_interrupt_envelope`,改动局限 `chat.py` 一个函数):
 

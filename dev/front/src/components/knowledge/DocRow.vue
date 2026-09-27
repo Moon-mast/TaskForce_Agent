@@ -37,7 +37,7 @@ const idText = computed(() => shortDocId(props.doc.doc_id))
         {{ copied ? '已复制' : idText }}
       </button>
     </td>
-    <td class="row__cell row__time" :title="doc.created_at" data-testid="doc-time">
+    <td class="row__cell row__time" :title="timeText" data-testid="doc-time">
       {{ timeText }}
     </td>
     <td class="row__cell row__num" data-testid="doc-chunks">{{ doc.chunks }}</td>
@@ -53,8 +53,12 @@ const idText = computed(() => shortDocId(props.doc.doc_id))
 </template>
 
 <style scoped>
+.row {
+  transition: background var(--t-fast);
+}
+
 .row:hover {
-  background: var(--bg-raised);
+  background: var(--bg-hover);
 }
 
 /* 新入库行 2s 高亮(UI-DESIGN §4.1) */
@@ -64,10 +68,14 @@ const idText = computed(() => shortDocId(props.doc.doc_id))
 }
 
 .row__cell {
-  padding: var(--sp-2) var(--sp-3);
+  padding: 10px var(--sp-4);
   border-bottom: 1px solid var(--border-subtle);
   font-size: var(--fs-sm);
   vertical-align: middle;
+}
+
+.row:last-child .row__cell {
+  border-bottom: none;
 }
 
 .row__name {

@@ -24,9 +24,9 @@ const composer = ref<InstanceType<typeof Composer> | null>(null)
 
 /** 空态示例问句:点击**填入**输入框,不直接发送(UI-DESIGN §3.4) */
 const EXAMPLES = [
-  { text: '总结一下 docs/ 里关于记忆设计的那部分', tag: '知识库检索' },
-  { text: '查一下 pgvector 0.7 的 HNSW 参数默认值,给出建议', tag: '联网调研 + 知识库检索' },
-  { text: '写段脚本统计 docs/ 下每个 md 的字数', tag: '沙箱执行' },
+  { text: '总结知识库里这份年报的核心财务指标与风险提示', tag: '知识库检索' },
+  { text: '调研低空经济最新政策与市场规模,先给个执行计划', tag: '联网调研 + 任务拆分' },
+  { text: '写段脚本计算我上传的持仓表近一年最大回撤', tag: '沙箱执行' },
 ]
 
 const routeThreadId = computed(() => {
@@ -97,8 +97,8 @@ async function onCopy(text: string): Promise<void> {
 
     <EmptyState
       v-else-if="chat.items.length === 0"
-      title="本地 Agent 工作台"
-      hint="可以问我:本地知识库里的文档、需要联网查的最新资料、需要跑起来验证的代码。"
+      title="企业投资调研助手"
+      hint="可以问我:知识库里的研报与公告、需要联网调研的最新动态、需要跑数据验证的计算。复杂调研会先给计划,确认后分批执行。"
     >
       <ul class="examples">
         <li v-for="ex in EXAMPLES" :key="ex.text">
@@ -141,14 +141,15 @@ async function onCopy(text: string): Promise<void> {
   align-items: baseline;
   gap: var(--sp-3);
   min-width: 0;
-  padding: var(--sp-4) var(--sp-4) 0;
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
   width: min(var(--measure-text), 100%);
   margin: 0 auto;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .view__title {
   font-size: var(--fs-xl);
-  font-weight: 600;
+  font-weight: var(--fw-strong);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -229,39 +230,53 @@ async function onCopy(text: string): Promise<void> {
 .examples {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  width: 520px;
+  gap: var(--sp-3);
+  width: 560px;
   max-width: 100%;
-  margin: var(--sp-3) 0 0;
+  margin: var(--sp-4) 0 0;
   padding: 0;
   list-style: none;
 }
 
+/* 示例问句卡片:悬停浮起 + 标签胶囊,比普通列表项更有"可点"的暗示 */
 .examples__btn {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-2);
   width: 100%;
-  padding: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
   text-align: left;
   cursor: pointer;
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
 }
 
 .examples__btn:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-hover);
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-pop-sm);
+  transform: translateY(-1px);
 }
 
 .examples__text {
   color: var(--text-primary);
   font-size: var(--fs-md);
+  line-height: var(--lh-base);
 }
 
 .examples__tag {
-  color: var(--text-muted);
+  align-self: flex-start;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent);
   font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 16px;
 }
 </style>

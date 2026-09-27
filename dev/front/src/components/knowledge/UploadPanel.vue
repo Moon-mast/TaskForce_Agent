@@ -192,17 +192,22 @@ async function uploadAt(idx: number): Promise<void> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-5) var(--sp-4);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--r-md);
-  background: var(--bg-panel);
+  gap: var(--sp-3);
+  padding: var(--sp-6) var(--sp-4);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
   text-align: center;
+  transition:
+    border-color var(--t-base),
+    background var(--t-base),
+    box-shadow var(--t-base);
 }
 
 .up__drop--over {
   border-color: var(--accent);
   background: var(--accent-soft);
+  box-shadow: var(--focus-glow);
 }
 
 .up__text {
@@ -212,7 +217,7 @@ async function uploadAt(idx: number): Promise<void> {
 
 .up__hint {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
 }
 
 .up__input {
@@ -220,16 +225,21 @@ async function uploadAt(idx: number): Promise<void> {
 }
 
 .up__queue {
+  background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
 .up__queue-title {
-  padding: var(--sp-2) var(--sp-3);
-  border-bottom: 1px solid var(--border-strong);
+  padding: 10px var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
   color: var(--text-muted);
   font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
 }
 
 .up__list {

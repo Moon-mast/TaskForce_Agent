@@ -188,6 +188,22 @@ def threads_meta():
     _graph, checkpointer, _usage, _tasks = _get_app()
     return {"threads": list_session_meta(checkpointer)}
 
+
+@router.delete("/threads/{thread_id}")
+def delete_thread(thread_id: str):
+    """删除会话:checkpointer 三表(checkpoints/blobs/writes)经 PostgresSaver
+    的 delete_thread 清除,TaskManager 台账同步清理。
+
+    有未完成后台任务时 400 拒删:清了台账,跑完的结果无处回收、计划推进悬空。
+    done 结果随台账一并丢弃——会话没了,无人消费。幂等:不存在的会话同样返回 ok。
+    """
+    _graph, checkpointer, _usage, tasks = _get_app()
+    discarded = tasks.discard(thread_id)
+    if not discarded["ok"]:
+        raise HTTPException(status_code=400, detail="该会话有正在执行的后台任务,完成后再删除")
+    checkpointer.delete_thread(thread_id)
+    return {"ok": True, "thread_id": thread_id}
+
 @router.get("/threads/{thread_id}/messages")
 def thread_messages(thread_id:str):
     """历史消息回填:读 checkpointer state 的 messages,过滤内部合成消息

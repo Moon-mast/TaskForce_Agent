@@ -14,11 +14,13 @@ defineProps<{ item: UserItem }>()
 .bubble {
   align-self: flex-end;
   max-width: 76%;
-  padding: var(--sp-2) var(--sp-3);
-  background: var(--bg-hover);
-  border: 1px solid var(--border-subtle);
+  padding: var(--sp-3) var(--sp-4);
+  /* 用户气泡带一点 accent 倾向:与 AI 中性正文一眼区分"谁在说话" */
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   /* 右下角收口:一条隐性的"发言指向",不引入箭头装饰 */
-  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-lg);
+  border-radius: var(--r-xl) var(--r-xl) var(--r-sm) var(--r-xl);
+  box-shadow: var(--shadow-card);
   color: var(--text-primary);
   font-size: var(--fs-lg);
   line-height: var(--lh-base);

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
-import { send, submitAnswer, submitConfirm, summarize } from '@/api/chat'
+import { send, submitAnswer, submitConfirm, submitPlan, summarize } from '@/api/chat'
 import { SseError, type SseHandlers } from '@/api/sse'
 import { useChatStore } from '@/stores/chat'
 import { createFakeStorage } from '@/test-utils/fakeStorage'
@@ -12,12 +12,14 @@ vi.mock('@/api/chat', () => ({
   send: vi.fn(),
   submitAnswer: vi.fn(),
   submitConfirm: vi.fn(),
+  submitPlan: vi.fn(),
   summarize: vi.fn(),
 }))
 
 const mockSend = vi.mocked(send)
 const mockAnswer = vi.mocked(submitAnswer)
 const mockConfirm = vi.mocked(submitConfirm)
+const mockPlan = vi.mocked(submitPlan)
 const mockSummarize = vi.mocked(summarize)
 
 beforeEach(() => {
@@ -26,6 +28,7 @@ beforeEach(() => {
   mockSend.mockReset()
   mockAnswer.mockReset()
   mockConfirm.mockReset()
+  mockPlan.mockReset()
   mockSummarize.mockReset()
 })
 
@@ -154,6 +157,32 @@ describe('挂起恢复入口', () => {
       expect.any(Object),
       expect.anything(),
     )
+  })
+
+  it('confirmPlan → POST /chat/plan:批准发 y,取消发 n', async () => {
+    mockPlan.mockImplementation(() => Promise.resolve())
+
+    const chat = useChatStore()
+    const stream = useChatStream()
+
+    await stream.confirmPlan('y')
+    expect(mockPlan).toHaveBeenCalledWith(
+      { thread_id: chat.currentThreadId, text: 'y' },
+      expect.any(Object),
+      expect.anything(),
+    )
+
+    chat.endTurn()
+    await stream.confirmPlan('n')
+    expect(mockPlan).toHaveBeenLastCalledWith(
+      { thread_id: chat.currentThreadId, text: 'n' },
+      expect.any(Object),
+      expect.anything(),
+    )
+
+    chat.endTurn()
+    await stream.confirmPlan('  ')
+    expect(mockPlan).toHaveBeenCalledTimes(2) // 空白文本早退
   })
 })
 

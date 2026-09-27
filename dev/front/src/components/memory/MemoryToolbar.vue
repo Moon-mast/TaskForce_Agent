@@ -49,6 +49,20 @@ const emit = defineEmits<{ refresh: [] }>()
 .toolbar__filter {
   flex: 1;
   min-width: 0;
-  max-width: 280px;
+  max-width: 320px;
+}
+
+/* 窄屏:计数文案换行优先,过滤框仍可用 */
+@media (max-width: 720px) {
+  .toolbar {
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+
+  .toolbar__filter {
+    max-width: none;
+    flex-basis: 100%;
+    order: 3;
+  }
 }
 </style>

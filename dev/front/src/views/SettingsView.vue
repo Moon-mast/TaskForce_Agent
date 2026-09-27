@@ -35,6 +35,6 @@ const section = computed<SectionId>(() => {
 .view {
   width: min(var(--measure-page), 100%);
   margin: 0 auto;
-  padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  padding: var(--sp-6) var(--sp-4) var(--sp-6);
 }
 </style>

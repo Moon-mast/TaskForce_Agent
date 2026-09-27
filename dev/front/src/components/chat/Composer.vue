@@ -69,6 +69,7 @@ watch(
 const failedNoOutput = computed(() => chat.turn?.status === 'error' && !chat.turnHasOutput)
 
 const hint = computed(() => {
+  if (chat.pending?.sub === 'plan') return '请先处理上方的调研计划确认'
   if (chat.pending !== null) return '请先回答上方问题'
   if (chat.isStreaming) return slowStart.value ? '正在初始化智能体…' : '流式进行中'
   if (failedNoOutput.value && sentText.value !== '' && draft.value.trim() === sentText.value) {
@@ -117,8 +118,6 @@ defineExpose({ fill })
 
 <template>
   <div class="composer">
-    <p class="composer__hint" data-testid="composer-hint">{{ hint }}</p>
-
     <div class="composer__box">
       <textarea
         ref="el"
@@ -134,6 +133,7 @@ defineExpose({ fill })
       />
       <AppButton
         v-if="chat.isStreaming"
+        class="composer__action"
         data-testid="composer-stop"
         @click="stream.abort()"
       >
@@ -142,6 +142,7 @@ defineExpose({ fill })
       <AppButton
         v-else
         variant="primary"
+        class="composer__action"
         :disabled="!canSend"
         data-testid="composer-send"
         @click="submit"
@@ -149,6 +150,8 @@ defineExpose({ fill })
         发送
       </AppButton>
     </div>
+
+    <p class="composer__hint" data-testid="composer-hint">{{ hint }}</p>
   </div>
 </template>
 
@@ -160,33 +163,31 @@ defineExpose({ fill })
   padding: var(--sp-2) var(--sp-4) var(--sp-4);
 }
 
-.composer__hint {
-  margin-bottom: var(--sp-1);
-  padding: 0 var(--sp-1);
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
-}
-
+/* 输入盒是对话页的视觉焦点:浮起一层 + 大圆角 */
 .composer__box {
   display: flex;
   align-items: flex-end;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
-  background: var(--bg-input);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-lg);
-  transition: border-color var(--t-fast);
+  padding: var(--sp-3);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-pop-sm);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
 }
 
 .composer__box:focus-within {
-  border-color: var(--border-focus);
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-pop-sm), var(--focus-glow);
 }
 
 .composer__input {
   flex: 1;
-  min-height: 24px;
+  min-height: 26px;
   max-height: 160px;
-  padding: 0;
+  padding: 3px var(--sp-1) 0;
   background: transparent;
   border: none;
   outline: none;
@@ -202,5 +203,19 @@ defineExpose({ fill })
 
 .composer__input:disabled {
   cursor: not-allowed;
+}
+
+.composer__action {
+  flex: none;
+  height: var(--ctl-h);
+  border-radius: var(--r-lg);
+}
+
+.composer__hint {
+  margin-top: var(--sp-2);
+  padding: 0 var(--sp-1);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  text-align: center;
 }
 </style>

@@ -51,12 +51,23 @@ const timeTitle = computed(() => fmtMemoryAbsolute(props.item.created_at))
 .mem {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
+  gap: var(--sp-3);
+  padding: var(--sp-4);
   list-style: none;
   background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+}
+
+.mem:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-pop-sm);
+  transform: translateY(-1px);
 }
 
 /* 侧栏点击定位:短暂高亮,与知识库页"刚上传行"同一套反馈语言 */
@@ -86,18 +97,21 @@ const timeTitle = computed(() => fmtMemoryAbsolute(props.item.created_at))
   border: 1px solid var(--border-strong);
   border-radius: var(--r-full);
   font-size: var(--fs-xs);
-  line-height: 16px;
+  font-weight: var(--fw-medium);
+  line-height: 17px;
   color: var(--text-muted);
   cursor: default;
 }
 
 .mem__badge--explicit {
-  border-color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
 .mem__badge--confirmed {
-  border-color: var(--success);
+  border-color: transparent;
+  background: var(--success-soft);
   color: var(--success);
 }
 

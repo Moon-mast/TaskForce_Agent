@@ -151,19 +151,24 @@ onMounted(() => {
   position: absolute;
   right: var(--sp-4);
   bottom: var(--sp-4);
-  width: 88px;
   height: 32px;
+  padding: 0 var(--sp-4);
   background: var(--bg-raised);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-full);
   color: var(--text-secondary);
   font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   cursor: pointer;
   box-shadow: var(--shadow-pop-sm);
+  transition:
+    background var(--t-fast),
+    color var(--t-fast),
+    border-color var(--t-fast);
 }
 
 .list__pill:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  border-color: var(--accent-border);
+  color: var(--accent);
 }
 </style>

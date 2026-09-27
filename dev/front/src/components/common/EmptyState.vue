@@ -18,19 +18,23 @@ withDefaults(defineProps<{ title?: string; hint?: string }>(), { title: '', hint
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
   padding: var(--sp-6) var(--sp-4);
   text-align: center;
 }
 
 .empty__title {
-  color: var(--text-secondary);
-  font-size: var(--fs-md);
+  color: var(--text-primary);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.01em;
 }
 
 .empty__hint {
+  max-width: 520px;
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
+  line-height: var(--lh-body);
 }
 
 .empty__action {
