@@ -3,7 +3,7 @@
 > 状态:见 [ROADMAP.md](../ROADMAP.md) | 代码目录:`settings/db/store.py`、`agent/{memory.py,ask.py}`、`cli/`
 > 一句话:做完本模块,Agent 跨会话记得你,并且会在不确定时主动问你、写记忆前请求批准。**全项目风险最高模块,严格按三步内部分解推进。**
 
-> **⚠️ 2026-09-04 架构变更(ADR-0011)**:T1/T2 已按"注入式"(每轮检索 top-5 塞 system)实现的部分是**过渡态**。本模块后续 T3-T6 与 ARCH-REVIEW §5 的 Step 3 合并落地时,记忆读/写改为 **memory-as-tool**(`memory_search` / `store_memory` 两个 @tool,结果以 ToolMessage 进消息流,不再注入 system)。本文件 T1-T6 的任务标题保留(功能点不变),机制描述以 ADR-0011 与 [ARCH-REVIEW.md](../../ARCH-REVIEW.md) 为准。
+> **⚠️ 2026-09-04 架构变更(ADR-0011)**:T1/T2 已按"注入式"(每轮检索 top-5 塞 system)实现的部分是**过渡态**。本模块后续 T3-T6 与 design/ARCH-REVIEW §5 的 Step 3 合并落地时,记忆读/写改为 **memory-as-tool**(`memory_search` / `store_memory` 两个 @tool,结果以 ToolMessage 进消息流,不再注入 system)。本文件 T1-T6 的任务标题保留(功能点不变),机制描述以 ADR-0011 与 [design/ARCH-REVIEW.md](../../design/ARCH-REVIEW.md) 为准。
 
 ## 1. 目标与范围
 
@@ -68,7 +68,7 @@
 - **Store vs checkpointer**:Store 跨线程持久(长期记忆),checkpointer 按线程存图状态(短期记忆);两者都挂 compile。
 - **interrupt/resume**:`interrupt(payload)` 在节点内挂起并持久化;恢复 = 对同 thread_id 再次 invoke/stream 时传 `Command(resume=值)`,节点从断点拿到值继续。
 - **单一挂起点**(ADR-0008):interrupt 只在 ask/memory;子图绝不 interrupt。
-- 注入格式与压缩纪律见 `docs/PROMPT-DESIGN.md` §1.1/§2。
+- 注入格式与压缩纪律见 `docs/design/PROMPT-DESIGN.md` §1.1/§2。
 
 ## 7. 常见坑与规避
 

@@ -1,6 +1,6 @@
 # TaskForce -- 项目方案 v2(精简版·面向实习求职)
 
-> v2 于 2026-08-28 定稿:项目定位从"深入学习 LangGraph 的完整系统"调整为"面向实习求职的项目经历",多用户与部分 LangGraph 进阶特性移入 backlog(见 ADR-0005,其取代 ADR-0003 的多用户决策;Send 并行后经 ADR-0006 回归 v1)。术语定义见 `CONTEXT.md`,上下文与提示词设计见 `docs/PROMPT-DESIGN.md`。核心思想:**砍掉一切伪必需品,把工时花在五个核心能力上,留足时间做演示与文档。**
+> v2 于 2026-08-28 定稿:项目定位从"深入学习 LangGraph 的完整系统"调整为"面向实习求职的项目经历",多用户与部分 LangGraph 进阶特性移入 backlog(见 ADR-0005,其取代 ADR-0003 的多用户决策;Send 并行后经 ADR-0006 回归 v1)。术语定义见根目录 `CONTEXT.md`,上下文与提示词设计见 `docs/design/PROMPT-DESIGN.md`。核心思想:**砍掉一切伪必需品,把工时花在五个核心能力上,留足时间做演示与文档。**
 
 **项目名:TaskForce**。架构隐喻:主智能体是指挥官(Supervisor),三个子智能体是特遣队员,任务可并行派发。README 定位句:**"TaskForce -- 基于 LangGraph 的个人 Agent 工作台:知识库问答、联网调研、沙箱代码执行,CLI 与 API 双入口。"**
 
@@ -17,7 +17,7 @@
 
 - Supervisor 拓扑:主智能体 + 3 个子智能体,子智能体互不直连,协作经主智能体路由。**主智能体支持并行派发**(ADR-0006):一次决策可同时派多个子任务,经 `Send(node, state)` 动态 fan-out,全部完成后 fan-in 回 supervisor 汇总。
 - **主智能体**:任务拆解与编排、亲自求解复杂任务、长期记忆唯一写入者。路由用 Pydantic 结构化输出,解析失败落入默认回退节点;防路由死循环用 LangGraph 原生 `recursion_limit`(config 顶层项)+ 捕获 `GraphRecursionError` 兜底(ADR-0009)。
-- **主/子智能体的上下文构成、系统提示词结构、消息策略与 token 治理**:详见 `docs/PROMPT-DESIGN.md`(要点:子智能体只收到自包含的任务契约、独立上下文执行、只回传结构化结果摘要;主层消息全量保留〔滑窗已废除,ADR-0009 R1,压缩功能为 backlog〕 + 子结果消费即清;提示词以 md 文件存放于 `prompts/` 包,经 `settings/loader.py` 的 `load_prompt()` 加载)。
+- **主/子智能体的上下文构成、系统提示词结构、消息策略与 token 治理**:详见 `docs/design/PROMPT-DESIGN.md`(要点:子智能体只收到自包含的任务契约、独立上下文执行、只回传结构化结果摘要;主层消息全量保留〔滑窗已废除,ADR-0009 R1,压缩功能为 backlog〕 + 子结果消费即清;提示词以 md 文件存放于 `prompts/` 包,经 `settings/loader.py` 的 `load_prompt()` 加载)。
 
 ### 路由与并行派发设计
 
@@ -86,7 +86,7 @@ supervisor ──结构化路由──┬──► answer:主智能体亲自作�
   - **条目结构**:一句话原子事实 + 来源标记(`explicit` / `confirmed`)+ 创建时间;写入时由主智能体把要记的内容压缩成单条原子事实,不存成段对话。
   - **检索**:封装为 `memory_search(query, top_k)` 工具,由主智能体判断需要时**按需调用**(ADR-0011,memory-as-tool);结果以 ToolMessage 进消息流,**不注入系统提示词**。
   - **写入**:封装为 `store_memory(content, source)` 工具 + memory 节点(显式写入直写 / 确认写入 interrupt + HITL,ADR-0002),source 标 `explicit` / `confirmed`。
-- **agents.md**:本地文件(build_graph 期读入并缓存,路径入 settings,消除 cwd 依赖),固定进 system;按 ADR-0011 只进 **answer/ask 侧**,路由(supervisor)不注入;调研与执行智能体经任务契约收到全文,知识库检索智能体不注入(详见 PROMPT-DESIGN.md)。
+- **agents.md**:本地文件(build_graph 期读入并缓存,路径入 settings,消除 cwd 依赖),固定进 system;按 ADR-0011 只进 **answer/ask 侧**,路由(supervisor)不注入;调研与执行智能体经任务契约收到全文,知识库检索智能体不注入(详见 docs/design/PROMPT-DESIGN.md)。
 
 ## 4. 知识库与 RAG
 
@@ -98,7 +98,7 @@ supervisor ──结构化路由──┬──► answer:主智能体亲自作�
 ## 5. Skills、MCP 与执行沙箱
 
 - **Skill**:`skills/` 目录,文件夹 + SKILL.md(遵循 Anthropic Skills 规范);元数据(name + description)常驻提示词,全文用时才读,渐进式加载;主智能体与执行智能体可用;Skill 附带脚本一律经沙箱执行,不直接在本机运行。
-- **MCP**:`mcp_config.json` 配置本机 stdio 服务器,`langchain-mcp-adapters` 把工具暴露给智能体;连接带超时,单服务器失败降级为告警并继续,绝不阻塞主流程;工具按"索引常驻 + 按需拉详情"注入(详见 PROMPT-DESIGN.md)。
+- **MCP**:`mcp_config.json` 配置本机 stdio 服务器,`langchain-mcp-adapters` 把工具暴露给智能体;连接带超时,单服务器失败降级为告警并继续,绝不阻塞主流程;工具按"索引常驻 + 按需拉详情"注入(详见 docs/design/PROMPT-DESIGN.md)。
 - **内置工具**:`tools/tool/` 存放 agent 自带的基础工具(read_file / write_file / list_files),操作目标为**沙箱工作区**而非本机文件系统,底层经沙箱执行封装。
 
 ### 执行沙箱(接入用户自建的远程 Docker 服务,ADR-0007)

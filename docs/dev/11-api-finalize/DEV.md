@@ -30,7 +30,7 @@
 | `api/main.py` | 挂载 router、lifespan 里初始化(连不上 DB 启动即报) |
 | `README.md` | 见 T5 |
 | `tests/test_api.py` | TestClient 冒烟 |
-| `docs/demo-scripts.md`(或 README 内) | 3-5 条固定演示剧本 |
+| `docs/personal/demo-scripts.md`(或 README 内) | 3-5 条固定演示剧本 |
 
 ## 4. 分步任务清单
 
@@ -61,7 +61,7 @@ def chat(req: ChatRequest) -> StreamingResponse:
 - 验收:两入口各跑一遍黄金剧本。
 
 ### T5:README(面试官 30 秒扫描线)
-- [ ] 必含:顶部定位句(DESIGN.md 顶部原文)、mermaid 架构图(本地主体 + 远程沙箱分离)、GIF/录屏 + 一行启动、五分钟起步(compose up -> cp .env -> uv sync -> uvicorn / repl)、功能勾选清单、**"刻意不做"清单(附一句取舍理由,取自 DESIGN §12)**、设计决策章节(五道必答题:子图vs工具/多智能体价值/无async并行/沙箱远程/HITL单点)、一条命令跑测试。
+- [ ] 必含:顶部定位句(design/DESIGN.md 顶部原文)、mermaid 架构图(本地主体 + 远程沙箱分离)、GIF/录屏 + 一行启动、五分钟起步(compose up -> cp .env -> uv sync -> uvicorn / repl)、功能勾选清单、**"刻意不做"清单(附一句取舍理由,取自 design/DESIGN §12)**、设计决策章节(五道必答题:子图vs工具/多智能体价值/无async并行/沙箱远程/HITL单点)、一条命令跑测试。
 - 验收:新人按 README 五分钟起步能跑通 demo。
 
 ### T6:演示剧本(3-5 条固定)

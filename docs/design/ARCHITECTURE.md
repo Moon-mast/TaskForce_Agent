@@ -1,7 +1,7 @@
 # TaskForce 架构总览
 
 > 现有项目架构的成文介绍(2026-09-23 架构整理 c1-c8 落地后)。
-> 领域术语一律见根目录 `CONTEXT.md`;进度、契约归属与契约变更登记见 `docs/dev/ROADMAP.md`;架构决策见 `docs/adr/`;文档目录索引见 `CLAUDE.md` 文档体系表。
+> 领域术语一律见根目录 `CONTEXT.md`;进度、契约归属与契约变更登记见 `docs/dev/ROADMAP.md`;架构决策见 `docs/adr/`;文档目录索引见 `docs/index.md`。
 
 ## 1. 一句话定位
 

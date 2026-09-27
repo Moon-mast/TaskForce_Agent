@@ -1,7 +1,7 @@
 # ADR-0010: 子智能体统一采用 ReAct 执行模式
 
 > 状态:已定稿(2026-09-04)| 关联:ADR-0006(并行派发)、ADR-0008(单一挂起点)、ADR-0009(多智能体架构修正)
-> 背景:用户裁决"本项目 agent 采用 ReAct 模式"。此前期望散落在各模块文档:仅 09(executor)有 ReAct 锚点,05(retriever)是三节点固定管线(且已按管线实现),10(research)是外置状态循环设计,DESIGN.md 从未定义统一的执行模式。本次经三代理组(提示词重设计 / ReAct 主流调研 / 差距分析)讨论定稿,调研来源见 `docs/dev/react-refactor-plan.md` 附录。
+> 背景:用户裁决"本项目 agent 采用 ReAct 模式"。此前期望散落在各模块文档:仅 09(executor)有 ReAct 锚点,05(retriever)是三节点固定管线(且已按管线实现),10(research)是外置状态循环设计,design/DESIGN.md 从未定义统一的执行模式。本次经三代理组(提示词重设计 / ReAct 主流调研 / 差距分析)讨论定稿,调研来源见 `docs/dev/react-refactor-plan.md` 附录。
 
 ## 决议
 

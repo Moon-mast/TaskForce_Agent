@@ -193,7 +193,8 @@ def main() -> None:
     turn_lock = threading.Lock()  # 用户轮与自动汇总轮互斥(优先级:用户询问优先)
     wake = threading.Event()      # 任务完成事件(TaskManager.on_done 唤醒 watcher)
     llm = make_llm(settings)
-    routeLlm = make_llm(settings, thinking="disabled")  # 路由固定关思考:DeepSeek 思考模式不支持强制 tool_choice
+    # 路由固定关思考:DeepSeek 思考模式不支持强制 tool_choice
+    routeLlm = make_llm(settings, thinking="disabled")
     tasks = TaskManager(llm, on_done=wake.set)  # 异步派发:完成即唤醒主动汇总
     graph = build_graph(llm, checkpointer, tasks=tasks, routeLlm=routeLlm)
     sessions = SessionStore()

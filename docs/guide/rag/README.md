@@ -56,5 +56,5 @@
 | 进度、里程碑、变更登记(按日期的决策流水) | [TODO.md](../../new_module/rag_0.1/TODO.md) | 引用 |
 | 契约归属与契约变更纪律 | [ROADMAP.md](../../dev/ROADMAP.md) §6/§7 | 引用 |
 | 术语定义与禁用词 | [CONTEXT.md](../../../CONTEXT.md) | 严格对齐 |
-| 外层 Agent 架构(路由/子图/记忆/HITL) | [AGENTS.md](../../../AGENTS.md) §7、[docs/DESIGN.md](../../DESIGN.md) | 只讲与知识库相接的那几处 |
+| 外层 Agent 架构(路由/子图/记忆/HITL) | [AGENTS.md](../../../AGENTS.md) §7、[docs/design/DESIGN.md](../../design/DESIGN.md) | 只讲与知识库相接的那几处 |
 | 前端上传/列表/删除的字段契约 | [dev/front/docs/API-CONTRACT.md](../../../dev/front/docs/API-CONTRACT.md) §2.3 | 只讲后端一侧 |

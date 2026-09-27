@@ -49,7 +49,7 @@
 
 - **子图作为节点(ADR-0009)**:首选共享键直挂——`RetrieverState` 声明与主图共享的 `contract`/`subagent_results` 键,编译图直接 `add_node`;`Send` payload `{"contract": ...}` 经子图 schema 校验进入。仅当 03 的直挂实验失败才用 wrapper(invoke 编译图 + 转换进出 + 异常兜底,登记三项代价)。
 - **独立 state**:子图 schema 无 `messages` 键,主图消息不投影进来,这正是"独立上下文"的实现。
-- 提示词模板见 `docs/PROMPT-DESIGN.md` §2.1-2.3。
+- 提示词模板见 `docs/design/PROMPT-DESIGN.md` §2.1-2.3。
 
 ## 7. 常见坑与规避
 

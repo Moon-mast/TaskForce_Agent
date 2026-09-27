@@ -1,7 +1,7 @@
 # ADR-0011: 固定 system + 动态 messages + 记忆工具化
 
 > 状态:已定稿(2026-09-04)| 关联:ADR-0008(单一挂起点)、ADR-0009(多智能体架构修正)、ADR-0010(ReAct 子智能体)
-> 背景:架构评审(见 `docs/ARCH-REVIEW.md`,7 agents 团队审查 + 权威调研)确认三处设计缺陷:①每轮把 agents.md 全文与记忆 top-5 动态渲染进 SystemMessage,破坏提示词前缀缓存(且与 PROMPT-DESIGN §1.1 自身"静态段连续排列以利缓存"相悖);②记忆检索未工具化,每轮无条件检索注入 system,Agent 无法按需检索,同一轮最多重复检索 3 次;③记忆写入完全缺失、子结果占 HumanMessage 角色、路由 prompt 过重。本 ADR 定稿修复方向,细化方案见 ARCH-REVIEW.md。
+> 背景:架构评审(见 `docs/design/ARCH-REVIEW.md`,7 agents 团队审查 + 权威调研)确认三处设计缺陷:①每轮把 agents.md 全文与记忆 top-5 动态渲染进 SystemMessage,破坏提示词前缀缓存(且与 design/PROMPT-DESIGN §1.1 自身"静态段连续排列以利缓存"相悖);②记忆检索未工具化,每轮无条件检索注入 system,Agent 无法按需检索,同一轮最多重复检索 3 次;③记忆写入完全缺失、子结果占 HumanMessage 角色、路由 prompt 过重。本 ADR 定稿修复方向,细化方案见 design/ARCH-REVIEW.md。
 
 ## 决议
 
@@ -23,6 +23,6 @@
 
 ## 影响
 
-- **文档**:PROMPT-DESIGN §1.1(七段结构改为固定层/动态层划分)、§4.2(治理优先级);DESIGN §3(记忆检索/注入描述);ROADMAP §7 契约变更登记;本 ADR 与 ARCH-REVIEW.md 相互引用。
-- **代码**(分步落地,见 ARCH-REVIEW §5,每步独立验收):memory_ctx 改造为工具、supervisor/answer 提示词装配、build_graph 注入方式、UsageTracker 扩展、service 告警。
+- **文档**:design/PROMPT-DESIGN §1.1(七段结构改为固定层/动态层划分)、§4.2(治理优先级);design/DESIGN §3(记忆检索/注入描述);ROADMAP §7 契约变更登记;本 ADR 与 design/ARCH-REVIEW.md 相互引用。
+- **代码**(分步落地,见 design/ARCH-REVIEW §5,每步独立验收):memory_ctx 改造为工具、supervisor/answer 提示词装配、build_graph 注入方式、UsageTracker 扩展、service 告警。
 - **顺序**:Step 1 文档先行(本 ADR 即其一);Step 2 固定 system;Step 3 记忆工具化;后续步骤不影响 06 模块主线,可穿插。

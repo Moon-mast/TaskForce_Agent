@@ -50,7 +50,7 @@ def load_prompt(name: str, **slots: str) -> str:
     return Template(text).substitute(**slots)
 ```
 - 占位符**必须用 `$name` 形式**(string.Template):提示词内有 JSON 示例花括号,str.format 会炸。
-- [ ] 按设计写 `prompts/supervisor.md`(七段结构:人设 / agents.md 插槽 / 路由与子智能体能力清单 / Skills 元数据插槽 / 长期记忆插槽 / 子智能体结果插槽 / 输出格式约束,内容见 PROMPT-DESIGN.md §1.1)与 `prompts/answer.md`。
+- [ ] 按设计写 `prompts/supervisor.md`(七段结构:人设 / agents.md 插槽 / 路由与子智能体能力清单 / Skills 元数据插槽 / 长期记忆插槽 / 子智能体结果插槽 / 输出格式约束,内容见 design/PROMPT-DESIGN.md §1.1)与 `prompts/answer.md`。
 - 验收:单测--`load_prompt("supervisor", agents_md="X")` 返回含 "X" 的文本;缺失插槽时报 KeyError;md 内字面 JSON 花括号不引发渲染错误。
 
 ### T2:冻结三份契约(contracts/)
@@ -118,7 +118,7 @@ class ResultSummary(BaseModel):
 - **`recursion_limit`**:LangGraph 原生递归上限(config 顶层键,非 `configurable`),父图+子图 super-step 总和;超限抛 `GraphRecursionError`,由 `run_turn` 捕获兜底(ADR-0009 §2 争议 B)。
 - **共享键直挂 vs wrapper**(ADR-0009 §2 争议 A):直挂只需父子共享键(contract/subagent_results),schema 不必相同;wrapper 仅作 fallback。
 - **fan-in**:同一轮所有 Send 完成后才走下一节点,无需手写等待。
-- 详见 DESIGN.md §2、ADR-0006 与 ADR-0009。
+- 详见 design/DESIGN.md §2、ADR-0006 与 ADR-0009。
 
 ## 7. 常见坑与规避
 

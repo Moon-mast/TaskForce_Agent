@@ -1,6 +1,6 @@
 # TaskForce 开发路线图(ROADMAP)
 
-> 本文档是**开发进度的唯一事实源**。设计意图见 `docs/DESIGN.md`,上下文与提示词设计见 `docs/PROMPT-DESIGN.md`,架构决策见 `docs/adr/`,术语见根目录 `CONTEXT.md`。
+> 本文档是**开发进度的唯一事实源**。设计意图见 `docs/design/DESIGN.md`,上下文与提示词设计见 `docs/design/PROMPT-DESIGN.md`,架构决策见 `docs/adr/`,术语见根目录 `CONTEXT.md`。
 > 状态图例:🔲 未开始 | 🔨 进行中 | ✅ 完成 | ⏸ 阻塞(注明原因) | ♻️ 返工
 
 ## 1. 模块总表
@@ -113,12 +113,12 @@ flowchart TD
 | 2026-09-02 | 防死循环机制 | 自数步数(MAX_STEPS/route_marker/哨兵消息)作废,改用 LangGraph 原生 `recursion_limit`(config 顶层键,初值 25)+ `run_turn` 捕获 `GraphRecursionError` 返回诚实兜底消息(ADR-0009 §2 争议 B) | 03/11 | ✅ 已同步 03-DEV |
 | 2026-09-02 | 子图接入方式 | 桩子图从"单函数假桩/wrapper 写死"改为**真实编译 StateGraph**;首选**共享键直挂**(`contract`/`subagent_results` 共享键 + `add_node(编译图)` + `Send(子图名, {"contract": ...})`,03 第 0 步最小实验验证);失败降级 wrapper 并登记三项代价(checkpoint 不共享/流式不保证/异常不传播);新增 `SubgraphContract` 契约与 `max_parallel_subagents`(初值 3)(ADR-0009) | 03/05/09/10 | ✅ 已同步 03/05/09/10-DEV |
 | 2026-09-02 | AgentState.contract 键 | 主图**移除** `contract` 键:共享键直挂仅需 `subagent_results`;`contract` 由 Send payload 直达子图,主图不声明(实测:并行多子图写回 contract 触发 InvalidUpdateError,ADR-0009 第 0 步实验延伸发现) | 03 | ✅ 已同步 state.py |
-| 2026-09-02 | ResultSummary.agent 命名 | **"retrieval" 统一为 "retriever"**(与 Route.Task.agent / 子图节点名 / supervisor.md 能力清单一致,消除同名智能体两套命名的矛盾;DEV.md/PROMPT-DESIGN.md 同步修正) | 03/05/10 | ✅ 已同步 summary.py / stub.py / build.py / tests / 文档 |
+| 2026-09-02 | ResultSummary.agent 命名 | **"retrieval" 统一为 "retriever"**(与 Route.Task.agent / 子图节点名 / supervisor.md 能力清单一致,消除同名智能体两套命名的矛盾;DEV.md/design/PROMPT-DESIGN.md 同步修正) | 03/05/10 | ✅ 已同步 summary.py / stub.py / build.py / tests / 文档 |
 | 2026-09-02 | ResultSummary.task 上限 | 删除 `max_length=100`:task 是 supervisor 自由生成文本的回显,长度不可控,加会上限会在子图边界抛 ValidationError 崩掉整轮(已实测复现);`conclusion` 的 100 上限保留(决策字段) | 03/05/09/10 | ✅ 已同步 summary.py + 回归测试 |
 | 2026-09-04 | 子智能体执行模式 | **三子智能体统一 ReAct 工具循环**(ADR-0010):手写循环共享骨架 `agent/subagents/react.py`(05/09/10 复用);retriever 检索能力封装为 `kb_search` 工具(去重+截断内聚),查询改写由 LLM 多轮调工具涌现;RetrieverState 增私有键 messages(add_messages)/hits/iteration;05 已实现三节点管线作废重写;supervisor 保持结构化路由不变;契约 schema 冻结不变(data={"hits":...} 行为形状保持);防失控改双层(子图自数 max_iterations + 主图 recursion_limit 兜底,ADR-0009 §2B v3 补注) | 05/09/10 | ✅ 已完成(模块 R 全量验收通过) |
 | 2026-09-10 | 沙箱工具契约 | `execute_python(code, session_id)` → `execute_python(code, timeout)`:实测用户沙箱(09-DEV §1 前提"协议以实际为准")为**无状态**执行(每次新建容器),无 session_id 概念;且出参无 files 字段,文件走独立端点 `/files/write`、`/files/read`(无列目录端点,list_files 用 execute_python 跑 os.listdir 实现,实测工作区挂载进容器可见);工具组统一"不抛异常,结构化 {ok, error}"返回 | 09/11 | ✅ 已同步 ROADMAP §6 |
 | 2026-09-04 | RAGStore.upload 返回值 | `str` → `tuple[str, bool]`(doc_id, created):新增内容级防重——documents 加 content_hash(解析后文本统一换行+strip 的 SHA-256)+ (user_id, content_hash) 唯一索引,重复上传复用已有文档且不再切块/向量化;存量旧数据不回填(用户决议,content_hash 为 NULL 不参与判重);消费方 rag/cli 与 REPL /kb 已同步 | 04/05/11 | ✅ 已同步 store/cli/repl/tests |
-| 2026-09-04 | 主智能体上下文结构 | **固定 system + 动态 messages**(ADR-0011):① agents.md 全文/记忆 top-5/子结果从 system 移出——agents.md 只在 answer/ask 侧、构建期装配一次,记忆改 `memory_search`/`store_memory` 工具(按需调用,ToolMessage 进消息流),子结果改结构化资源消息(不再占 HumanMessage 角色);② 路由(supervisor)prompt 精简为轻量 router,不再注入 agents.md/记忆正文;③ prompt caching 从"明确不做"改"静态前缀工程化"(P0);④ store 改 `graph.compile(store=...)` 注入,user_id 入 settings | 03/06/11 + 文档 | ✅ 已同步 PROMPT-DESIGN §1.1/§4.2、DESIGN §3、ADR-0011、ARCH-REVIEW.md;核心已落地(固定 system + 记忆工具化 + cache 观测 + 超阈值告警,74 tests 绿,真模型端到端验证 memory_search 命中);store 注入方式与 user_id 入 settings 排 backlog |
+| 2026-09-04 | 主智能体上下文结构 | **固定 system + 动态 messages**(ADR-0011):① agents.md 全文/记忆 top-5/子结果从 system 移出——agents.md 只在 answer/ask 侧、构建期装配一次,记忆改 `memory_search`/`store_memory` 工具(按需调用,ToolMessage 进消息流),子结果改结构化资源消息(不再占 HumanMessage 角色);② 路由(supervisor)prompt 精简为轻量 router,不再注入 agents.md/记忆正文;③ prompt caching 从"明确不做"改"静态前缀工程化"(P0);④ store 改 `graph.compile(store=...)` 注入,user_id 入 settings | 03/06/11 + 文档 | ✅ 已同步 design/PROMPT-DESIGN §1.1/§4.2、design/DESIGN §3、ADR-0011、design/ARCH-REVIEW.md;核心已落地(固定 system + 记忆工具化 + cache 观测 + 超阈值告警,74 tests 绿,真模型端到端验证 memory_search 命中);store 注入方式与 user_id 入 settings 排 backlog |
 | 2026-09-14 | RAGStore.search score 语义 | **score 从"余弦距离,越小越近"翻转为"RRF 融合分,越大越相关"**:纯 pgvector → BM25+向量双路召回 + RRF 融合(方案 A,任务见 docs/improved/rag_improve_v1/)。新增 `tools/rag/bm25.py`(tokenize 双端共用 / Bm25Index 内存索引懒加载+脏标记+双检锁 / rrf_fuse 排名并集融合);`store.search` 拆 `_search_vector`(向量路,SQL 补 `c.id AS chunk_id`)与关键词路,`rrf_fuse` 取 top_k,关键词路独占命中 `_fetch_chunks` 回填;upload/delete 后置脏(懒重建,存量零迁移)。返回 dict **新增 `chunk_id` 键**(只增不改)。消费方:kb_search 仅透传 score 零改动;cli.py 输出数字透传零改动;测试断言按新语义 | 04/05/11 + 测试 | ✅ 已同步 store.py/bm25.py/tests(29 passed)+ 本登记 |
 | 2026-09-16 | chat 路由只读增量(前端支持 B1/B2) | 新增两个只读端点,不改既有契约:① `GET /chat/threads/{thread_id}/messages` 历史消息回填(graph.get_state 读 messages,过滤 `[用户回答]:`/`子智能体结果已回收` 内部合成消息,附 `pending_interrupt` 挂起信封);② `GET /chat/threads/meta` 会话元数据(settings/db/checkpointer.py 新增 `list_session_meta` 纯 SQL 聚合,max(checkpoint_id) 降序,不反序列化 checkpoint;`list_session_ids` 不动,REPL 零影响) | 11/前端12 | ✅ 已落地(tests/test_api_history.py) |
 | 2026-09-16 | chat SSE interrupt 帧形状(B3,前端支持) | **数组 → 对象信封**(API 层帧变更,非 agent 契约):`{"interrupt": [{question\|proposal}]}` → `{"interrupt": {kind: "ask"\|"memory"\|"unknown", text}}`(`_interrupt_envelope`);配套 `/chat/confirm`、`/chat/answer` 加 `_require_interrupt` 挂起类型校验(不符 400——原先只查非空不查类型,判错会把 approved=True 当答案静默写进对话)。前端(dev/front)按 kind 选恢复端点;REPL 不经 `_sse_run` 零影响 | 11/前端12 | ✅ 已落地(test_api_history.py 14 用例 + test_api.py 同步修正假图挂起类型语义) |
@@ -142,7 +142,7 @@ flowchart TD
 1. **循序渐进**:严格按依赖链推进,不跳级;依赖未完成的模块不开工。
 2. **每步可运行**:模块文档每个任务都有验收命令,任何中间态系统都能启动/测试。
 3. **契约先行**:03 冻结 contracts 之前,05/06/09/10 只做骨架不写业务逻辑;改契约必须走 §7 登记。
-4. **全同步**:禁止引入 async/await;SSE 用同步 generator(DESIGN.md §1)。
+4. **全同步**:禁止引入 async/await;SSE 用同步 generator(design/DESIGN.md §1)。
 5. **共用业务层**:REPL 与 FastAPI 调同一 `run_turn`/`build_graph`(均在 `agent/` 包),不出现第二套实现。
 6. **提示词外置**:提示词一律放 `prompts/` 的 md 文件,经 `load_prompt()` 加载,禁止内联在节点代码。
 7. **测试伴随**:每模块产出物含 tests/;验收命令即 `uv run pytest ...`。

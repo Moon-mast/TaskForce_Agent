@@ -138,4 +138,4 @@ plan-and-execute(ADR-0012):**计划生成用 LLM、计划推进用确定性代�
 | 动态工具选择 | 工具集固定且小,白名单预筛已足够 |
 | 敏感信息打码 | 单用户本地,无多租户泄露面 |
 
-详细设计见 [docs/DESIGN.md](docs/DESIGN.md);演示剧本见 [docs/demo-scripts.md](docs/demo-scripts.md);前端设计与开发文档见 [dev/front/docs/](dev/front/docs/)。
+详细设计见 [docs/design/DESIGN.md](docs/design/DESIGN.md);演示剧本见 [docs/personal/demo-scripts.md](docs/personal/demo-scripts.md);前端设计与开发文档见 [dev/front/docs/](dev/front/docs/)。

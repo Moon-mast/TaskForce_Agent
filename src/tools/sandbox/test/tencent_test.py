@@ -1,10 +1,10 @@
-import os
 from dotenv import load_dotenv
 
 # 加载当前目录下的 .env 文件，将其中的变量注入到环境变量中
 load_dotenv()
 
-from e2b_code_interpreter import Sandbox
+# 必须在 load_dotenv() 之后导入:SDK 导入期就要读 env 密钥,前置会拿到空配置
+from e2b_code_interpreter import Sandbox  # noqa: E402
 
 # template 替换为控制台创建的沙箱工具名称
 # timeout 指定运行时长，单位为秒；示例为 3600 秒（1 小时）

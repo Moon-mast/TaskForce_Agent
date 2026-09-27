@@ -64,7 +64,7 @@
 
 | 坑 | 规避 |
 |---|---|
-| 智谱 embedding 维度与建表不符 | T2 实测维度 + 启动断言(DESIGN.md §6) |
+| 智谱 embedding 维度与建表不符 | T2 实测维度 + 启动断言(design/DESIGN.md §6) |
 | 向量插入格式 | psycopg 裸 SQL 用字符串字面量传 vector |
 | pypdf 解析扫描版 PDF 得空文本 | 不上 OCR;空文本明确报错并提示 |
 | 依赖蔓延 | 只加 pypdf/python-docx/langchain-text-splitters,禁 unstructured |

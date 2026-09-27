@@ -167,7 +167,7 @@ agent/subagents/retriever.py   # fallback 形态
 | `src/cli/repl.py` | 改 | config 增加 `"recursion_limit": 25`（顶层键，不进 configurable） |
 | `src/prompts/supervisor.md` | 不动 | 与滑窗无关 |
 | `tests/test_graph.py` | **新建（T6）** | fake model 轨迹/累积/清空/回退/超限五类断言；超限用 `recursion_limit=3` 触发；**新增"路由乒乓"用例（fake model 持续 dispatch）与"共享键直挂 vs wrapper"对照冒烟** |
-| `docs/PROMPT-DESIGN.md` | 改 | §1.2 滑窗段落标记"已作废（2026-09-01 决议）：全量保留，压缩功能排入 backlog" |
+| `docs/design/PROMPT-DESIGN.md` | 改 | §1.2 滑窗段落标记"已作废（2026-09-01 决议）：全量保留，压缩功能排入 backlog" |
 | `docs/dev/ROADMAP.md` | 登记 | §7 增行：滑窗作废 + recursion_limit 机制替换自数步数 + 子图直挂（方案 A）/ wrapper fallback（方案 B） |
 | `docs/dev/03-graph-skeleton/DEV.md` | 改 | T3/T5 任务描述删滑窗；T6 验收含超限测试与乒乓用例 |
 

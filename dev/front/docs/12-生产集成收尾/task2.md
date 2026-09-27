@@ -12,7 +12,7 @@
 ## 前置准备
 
 - [ ] task1 已完成并通过验收
-- [ ] docs/dev 的五条演示剧本(demo-scripts)已就位
+- [ ] docs/personal 的五条演示剧本(demo-scripts)已就位
 - [ ] UI-DESIGN 附录"一句话验收清单"已通读
 
 ## 实现步骤
