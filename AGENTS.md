@@ -11,7 +11,7 @@
 
 **当前状态**:后端模块 R + 00~11、前端 12 个模块、plan_0.1(Plan-and-Execute,ADR-0012)全部完成。知识库内核为 `src/rag_v01/`(docling 解析 + 父子分块 + Milvus 内置 BM25 + 向量双路 RRF 融合,方案见 `docs/new_module/rag_0.1/`);旧 `tools/rag/` 的解析/切分/BM25/pgvector 存储已于 2026-09-22 下线,只留 `embed.py`(长期记忆在用)。基线:后端全量 479 tests 绿,前端 vitest 185 tests 绿。进度以 `docs/dev/TODO.md` 与各 `docs/new_module/*/TODO.md` 为口径,架构决策以 `docs/adr/` 为准,文档导航以 `docs/index.md` 为准。
 
-## 二、代码布局(src 七包,平级,依赖单向无环)
+## 二、代码布局(src 八包,平级,依赖单向无环)
 
 ```
 src/
@@ -19,14 +19,21 @@ src/
 ├── rag_v01/    # 知识库 RAG 内核(独立可搬):docling 解析、父子分块、Milvus 混合检索、ragas 评估(带独立 CLI)
 ├── tools/      # tool/(内置:文件读写、clock、webfetch)、skills/、mcp/、sandbox/、websearch/、rag/(kb_search 工具封装 + embed)
 ├── prompts/    # 全部提示词(md 数据包,零代码,占位符 $name 形式)
-├── settings/   # 基础设施:config、loader(load_prompt 读 md)、usage、session、model_overrides(设置页覆盖表)、db/(base/checkpointer/store)
+├── settings/   # 基础设施:config、appdirs(路径唯一出处,开发态/冻结态双态)、loader(load_prompt 读 md)、usage、session、model_overrides(设置页覆盖表)、db/(base/checkpointer/store)
 ├── api/        # HTTP 入口:main.py + routers/(七 router:chat/knowledge/memory/skills/mcp/model_settings/health)
-└── cli/        # 终端入口:repl.py + context/streaming/commands/(斜杠命令按域一文件)
+├── cli/        # 终端入口:repl.py + context/streaming/commands/(斜杠命令按域一文件)
+└── desktop/    # 桌面壳入口(desktop_0.1):pywebview 单窗口 + 进程内 uvicorn + 预检/退出兜底;只做壳,图仍走 build_graph、单轮仍走 run_turn
 dev/front/      # Web 工作台(Vue 3 + Vite 独立工程:不进 uv / hatchling / pytest;生产构建产物由 FastAPI 同源托管)
+packaging/      # 桌面打包脚手架(PyInstaller spec + build.ps1),不含业务代码
 langgraph.json  # `langgraph dev` 入口,指向 agent/studio.py 的 make_studio_graph
 ```
 
-依赖方向:`cli/api -> agent -> {settings, tools, rag_v01}`;`tools -> settings`;`prompts` 纯数据零依赖。仓库根的 `skills/`、`agents.md`(运行时数据,gitignore)、`mcp_config.json`、`.env` 不进 src。import 一律 `from agent.xxx import ...`、`from tools.xxx import ...`、`from settings.xxx import ...`、`from rag_v01.xxx import ...`。
+依赖方向:`cli/api/desktop -> agent -> {settings, tools, rag_v01}`;`tools -> settings`;`prompts` 纯数据零依赖。仓库根的 `skills/`、`agents.md`(运行时数据,gitignore)、`mcp_config.json`、`.env` 不进 src。import 一律 `from agent.xxx import ...`、`from tools.xxx import ...`、`from settings.xxx import ...`、`from rag_v01.xxx import ...`、`from desktop.xxx import ...`。
+
+> ⚠️ **项目路径必须纯 ASCII**(2026-09-29 实测):uv/hatchling 写的 editable `.pth` 是 UTF-8,
+> 而 CPython 的 `site.addpackage` 用 `encoding="locale"` 读它(中文 Windows 下是 cp936),
+> 路径含中文时整条 `.pth` 静默失效、本地包全部 `ModuleNotFoundError`。
+> `-X utf8` 与 `PYTHONUTF8=1` 都救不了。详见 `docs/troubleshooting/common.md` 第 7 条。
 
 ## 三、文档体系(动手前必读;完整导航见 `docs/index.md`)
 
@@ -68,7 +75,7 @@ langgraph.json  # `langgraph dev` 入口,指向 agent/studio.py 的 make_studio_
 ## 五、常用命令
 
 ```bash
-uv sync                        # 安装依赖(hatchling 打包 src 七包,aliyun 镜像已配)
+uv sync                        # 安装依赖(hatchling 打包 src 八包,aliyun 镜像已配)
 docker compose up -d           # 起本地 PostgreSQL + pgvector(主机端口 5433;知识库 Milvus 跑在 WSL,不在此 compose 内)
 uv run pytest -q               # 全量测试
 uv run pytest tests/test_graph.py -q                    # 单个文件

@@ -14,7 +14,7 @@
 | **存储** | PostgreSQL + pgvector:会话 checkpoint、长期记忆 Store;知识库检索在 **Milvus**:docling 解析、父子分块、内置 BM25 + 向量双路召回 + RRF 融合(中文分词 jieba) |
 | **工具能力** | 内置文件读写 + 时钟工具 + MCP(stdio / streamable-http 双协议,失败降级)+ Skills 渐进式加载 + AnySearch 联网 + 远程 Docker 沙箱执行 |
 | **前端** | Vue 3.5 `<script setup>` + TypeScript strict + Vite 7 + Pinia + vue-router(hash)+ **原生 CSS 设计令牌,零 UI 库**;SSE 走 fetch + ReadableStream 手工分帧 |
-| **工程** | uv(依赖与运行)、hatchling(src 七包)、ruff、pytest、vitest / vue-tsc、docker compose |
+| **工程** | uv(依赖与运行)、hatchling(src 八包)、ruff、pytest、vitest / vue-tsc、docker compose |
 
 ## 架构
 

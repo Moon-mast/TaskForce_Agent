@@ -26,6 +26,11 @@ dependencies = [
     "e2b-code-interpreter>=2.10.0",
     "langgraph-cli[inmem]>=0.4.31",
     "trafilatura>=2.2.0",
+    # 桌面壳(desktop_0.1):窗口用 pywebview,Windows 走 EdgeChromium 后端(连带 pythonnet)。
+    # python-dotenv 虽由 pydantic-settings 传递带入,但 bootstrap 直接 import 它,
+    # 显式声明以免哪天上游换实现就断 —— 而且会断得莫名其妙。
+    "pywebview>=6.2",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +43,7 @@ rag2 = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.9",
+    "pyinstaller>=6.11",  # packaging/build.ps1 用;不进运行期依赖
 ]
 
 [build-system]
@@ -57,10 +63,18 @@ packages = [
     "src/api",
     "src/cli",
     "src/rag_v01",
+    "src/desktop",
 ]
-# 注意: 这七个目录必须**同深度**(都在 src/ 下)。hatch 的 editable 安装只写一条
+# 注意: 这八个目录必须**同深度**(都在 src/ 下)。hatch 的 editable 安装只写一条
 # `_editable_impl_*.pth` 指向 src/, 混放 `src/new_module/rag_v01` 这类更深目录会让新包 import 不到
 # —— rag_v01 于 2026-09-22 从 src/new_module/rag_v01 挪到 src/rag_v01 就是为了这条。
+#
+# ⚠️ 另一个同类坑(2026-09-29 实测):该 `.pth` 由 uv/hatchling 写成 **UTF-8**,
+# 而 CPython 的 `site.addpackage` 用 `io.TextIOWrapper(io.open_code(...), encoding="locale")`
+# 读它 —— Windows 中文 locale 下是 cp936。于是**项目路径含中文时,这条 .pth 整条失效**,
+# 表现为本地包全部 `ModuleNotFoundError`,而且没有任何报错。
+# `-X utf8` / `PYTHONUTF8=1` 都救不了(encoding="locale" 不吃 UTF-8 模式)。
+# 根治办法:项目放在纯 ASCII 路径下。详见 docs/troubleshooting/common.md。
 
 [tool.ruff]
 line-length = 100
@@ -76,6 +90,12 @@ known-first-party = ["rag_v01"]
 [tool.pytest.ini_options]
 # 这里以前有一条 pythonpath = ["src/new_module"] —— rag_v01 进 hatch packages 后不再需要:
 # `uv sync` 的 editable 安装已把 src/ 挂进 sys.path, 任意 cwd 下都能 `from rag_v01... import`。
+#
+# testpaths 锁死收集范围(勿删):不配的话裸跑 `uv run pytest -q` 会从仓库根递归,
+# 扫到 `src/tools/sandbox/test/tencent_test.py` —— 那是手动脚手架脚本,文件名撞上
+# pytest 默认的 `*_test.py` 规则,而它在模块顶层裸调 `Sandbox.create(timeout=3600)`,
+# import 即真连 e2b 云沙箱(计费 + 1 小时 TTL)。限定后行为与「全量」口径一致。
+testpaths = ["tests", "src/rag_v01/tests"]
 
 [tool.ruff.lint.per-file-ignores]
 # CLI/API 入口需要先 reconfigure stdout 为 UTF-8(Windows GBK 坑),import 因此被推迟

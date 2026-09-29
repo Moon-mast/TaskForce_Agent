@@ -1,7 +1,7 @@
 # TaskForce 文档索引
 
 > 用法:先在本索引定位,再深入对应文档。**新增文档/目录先在此登记再建文件**(与 AGENTS.md 文档表纪律同源);旧方案被取代时就地加『状态+日期+继任链接』横幅,不删除。
-> 最后更新:2026-09-27
+> 最后更新:2026-09-29
 
 ## 按任务找文档
 
@@ -9,8 +9,9 @@
 |---|---|
 | 了解项目是什么、卖点在哪 | [README](../README.md)、[design/DESIGN.md](design/DESIGN.md)(方案定稿)、personal/(简历与演示) |
 | 动手写代码(进度与顺序) | [dev/TODO.md](dev/TODO.md) → [dev/ROADMAP.md](dev/ROADMAP.md)(进度唯一事实源) → [dev/NN-xxx/DEV.md](dev/)(模块开发文档) |
-| 看现行模块方案(唯一口径) | [new_module/rag_0.1/](new_module/rag_0.1/)、[new_module/plan_0.1/](new_module/plan_0.1/)(各含 TODO.md 进度) |
-| 查某个设计为什么这样定 | [adr/](adr/)(0001~0012,**编号被 src 代码注释引用,文件不可改名**) |
+| 看现行模块方案(唯一口径) | [new_module/rag_0.1/](new_module/rag_0.1/)、[new_module/plan_0.1/](new_module/plan_0.1/)、[new_module/desktop_0.1/](new_module/desktop_0.1/)(各含 TODO.md 进度) |
+| 打包/交付桌面应用 | [new_module/desktop_0.1/](new_module/desktop_0.1/)(方案 + 完整代码 + 改动点清单)、[../build/](../build/)(PyInstaller spec 与构建脚本) |
+| 查某个设计为什么这样定 | [adr/](adr/)(0001~0013,**编号被 src 代码注释引用,文件不可改名**) |
 | 排查报错 / 避免重复踩坑 | [troubleshooting/](troubleshooting/)(现象/根因/解决,按模块组织) |
 | 学 RAG 全链路 / 备面试 | [guide/rag/](guide/rag/)(rag_v01 讲解 9 篇 + interview 面试 6 篇,两级索引) |
 | 看架构与提示词成文设计 | [design/ARCHITECTURE.md](design/ARCHITECTURE.md)、[design/PROMPT-DESIGN.md](design/PROMPT-DESIGN.md)(§编号被 src 注释引用) |
@@ -21,10 +22,10 @@
 
 | 目录 | 内容 | 状态 |
 |---|---|---|
-| `adr/` | 架构决策记录 0001~0012,含被否决项(勿"修复"有意为之的设计) | 活跃 |
+| `adr/` | 架构决策记录 0001~0013,含被否决项(勿"修复"有意为之的设计) | 活跃 |
 | `dev/` | 12 个模块目录(各含 DEV.md)+ ROADMAP.md(进度唯一事实源)+ TODO.md(任务总清单)+ react-refactor-plan.md(已完结专项计划)+ style-violations-20260925.md(风格违规底单,谁改到谁顺手改) | 活跃 |
 | `design/` | 方案与架构定稿:DESIGN(what/why)、PROMPT-DESIGN(上下文与提示词)、ARCHITECTURE(现有架构总览)、ARCH-REVIEW(2026-09-04 评审快照存档) | 活跃 |
-| `new_module/` | 现行模块方案树(**唯一口径**,新方案文档一律建在此处):rag_0.1(知识库新内核)、plan_0.1(Plan-and-Execute) | 活跃 |
+| `new_module/` | 现行模块方案树(**唯一口径**,新方案文档一律建在此处):rag_0.1(知识库新内核)、plan_0.1(Plan-and-Execute)、desktop_0.1(桌面应用打包) | 活跃 |
 | `guide/` | 面向人的讲解与面试材料(非工程约束文档),rag/ 下两级索引 | 活跃 |
 | `troubleshooting/` | 踩坑沉淀,格式见其 README;具普遍性的坑回填对应 DEV.md 坑表 | 活跃 |
 | `personal/` | 个人素材:简历、五条演示剧本(demo-scripts.md,README 配套) | 私人 |
@@ -40,3 +41,4 @@
 | `BACKEND.md` | TaskForce 产品内智能体运行时背景(经 `agent/memory_ctx.py` 注入产品 system) |
 | `agents.example.md` | 运行时 `agents.md`(gitignore)的入库示例模板 |
 | `dev/front/docs/` | 前端 12 模块开发文档 + 契约三件套(README/API-CONTRACT/ARCHITECTURE/UI-DESIGN) |
+| `packaging/` | 桌面应用打包脚手架:PyInstaller spec(windowed + console 两变体)与构建脚本;不含业务代码。**不叫 `build/`** —— 那在 .gitignore 里,spec 会入不了库 |

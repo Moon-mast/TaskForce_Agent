@@ -17,7 +17,7 @@
 
 | 文件 | 覆盖内容 |
 |---|---|
-| [common.md](common.md) | 线程池 except 内二次异常被静默吞、LangGraph recursion_limit 必须 ≥1、**节点内改 state 不写回主图(严重,异步回收失效根因)**、**带参 psycopg SQL 中字面 % 未转义(无参同型 SQL 不报,迷惑性强)**、**with_structured_output 默认 json_schema 被 DeepSeek 拒绝致路由静默兜底(route 帧永不发出)**、**异步派发的主动汇总只配了 REPL:Web 侧无触发通道 + 节点合成消息不进 SSE(双入口行为分叉,已修复并真机验证)**(跨模块通用 6 条) |
+| [common.md](common.md) | 线程池 except 内二次异常被静默吞、LangGraph recursion_limit 必须 ≥1、**节点内改 state 不写回主图(严重,异步回收失效根因)**、**带参 psycopg SQL 中字面 % 未转义(无参同型 SQL 不报,迷惑性强)**、**with_structured_output 默认 json_schema 被 DeepSeek 拒绝致路由静默兜底(route 帧永不发出)**、**异步派发的主动汇总只配了 REPL:Web 侧无触发通道 + 节点合成消息不进 SSE(双入口行为分叉,已修复并真机验证)**、**项目路径含中文致 editable 安装静默失效(本地包全 ModuleNotFoundError,`-X utf8` 与 `uv run` 都救不了,根治=项目放纯 ASCII 路径)**(跨模块通用 7 条) |
 | [03-graph-skeleton.md](03-graph-skeleton.md) | Send fan-out 写法、共享键直挂、reducer 清空、路由乒乓、结构化输出泄漏等;**子结果双截断 + data/sources 未渲染 → 主智能体拿不到子智能体产出(异步派发下必然,已修复并真模型验证)**(模块 03 实踩 13 条) |
 | [04-rag.md](04-rag.md) | 内容级判重、维度断言污染、Windows 换行翻译、schema 隔离、智谱 embedding 64 条/请求上限等(模块 04 实踩 5 条) |
 | [06-memory-hitl.md](06-memory-hitl.md) | HNSW 2000 维上限(智谱 2048 维改 flat)、PostgresStore embed 批量契约、interrupt 问题双重打印、ask HumanMessage 误启 Live 致盲打、memory 结构化 JSON 流式泄漏等(模块 06 实踩 5 条) |

@@ -45,3 +45,20 @@
   2. **合成消息不进流**:`run_turn` 的 `on_token` 白名单只有 `answer`/`ask` 两节点;dispatch 确认、memory 确认这类经 `Command.update["messages"]` 追加的**节点合成消息不是流式 token**,而 `_sse_run` 只对 `run_turn` 的返回值发 usage 帧、从不发内容帧 → Web 侧这些文本全部丢失(前端"无文本输出"兜底文案就是这么来的)。判据:一轮若**没有任何 answer/ask 流式 token**,其 final 正文必须整段补发。
 - **解决**:① TaskManager 记**会话线程归属**并加**非消费 peek** `status(thread_id)`(`has_done` 会看不能拿、`drain_done` 会消费,都不是给轮询用的);② `POST /chat/summary` 以 `AUTO_NOTICE`(触发语上移到 `agent/service.py`)跑一轮,与 REPL watcher 同语义;③ 前端 `useTaskWatch` 3s 轮询 peek,`pending === 0 && done > 0` 且空闲时自动发起汇总(用户轮优先);④ `_sse_run` 零 token 轮补发 final 正文;⑤ 顺带把 `on_done` 从"每任务触发"改成"**全批完成才触发**"——原实现下 3 个任务先回来的那个会先触发一次汇总,汇总只覆盖半批。
 - **关联**:src/api/routers/chat.py、agent/tasks.py、agent/service.py、agent/supervisor.py(route_node 接 LangGraph 注入的 config 取 thread_id)、dev/front/src/composables/useTaskWatch.ts;FE 开放项 `dev/front/docs/README.md`「开放项」/ `UI-DESIGN.md` §7.2 同步改"已落地"。经验:**双入口共用业务层时,"入口专属的编排逻辑"是行为分叉的隐藏点**——生命周期事件(任务完成/结果回收/自动汇总)要么沉到业务层,要么两个入口各写一份并在文档里登记语义对齐点;另:**SSE 白名单过滤 + 只转发流式 token,会顺手丢掉一切"节点更新式"的合成消息**,凡新增这类消息都要检查 API 出口。
+
+## 7. 项目路径含中文 → editable 安装静默失效,本地七个包全部 ModuleNotFoundError(2026-09-29 定位,根治办法待执行)
+
+- **现象**:全新 `uv sync` 之后,`uv run pytest -q` 报 37 个收集错误,每个都是 `ModuleNotFoundError: No module named 'api'`(同理 `agent` / `tools` / `settings` / `rag_v01` / `cli` / `prompts`)。**没有任何警告**。第三方包(langgraph / docling / pymilvus)全部正常,只有本项目自己的包找不到——很容易误判成"hatchling 打包配错了"或"packages 列表漏了一项"。
+- **根因**:uv/hatchling 把 editable 安装写成 `.venv/Lib/site-packages/_editable_impl_taskforce.pth`,内容是本项目 `src/` 的**绝对路径**,**编码为 UTF-8**。而 CPython 的 `site.addpackage` 这样读它:
+  ```python
+  f = io.TextIOWrapper(io.open_code(fullname), encoding="locale")
+  ```
+  `encoding="locale"` 在 Windows 中文 locale 下解析为 **cp936(GBK)**。于是 `D:\游戏\...` 的 UTF-8 字节 `\xe6\xb8\xb8\xe6\x88\x8f` 被按 GBK 解码成 `娓告`(U+6E38 U+620F → U+5A13 U+544A),`os.path.exists` 为假,**该行被静默跳过**(`addpackage` 里那层 `except Exception` 把它吞了)。结果就是 `.pth` 在、内容看着没错、但 `src` 从未进过 `sys.path`。
+  **实测排除的伪因**:`.pth` 文件本身存在且非空、路径真实存在(`os.path.exists` 用 UTF-8 解码时返回 True)、同目录的 `pywin32.pth` 正常生效(证明 `.pth` 机制本身没坏)、`site.addpackage` 手工调用时逐行 `exists=True`(证明条件判断没写错)——**唯一错的就是解码那一步**。
+- **为什么常见绕过都无效**:
+  - `-X utf8` / `PYTHONUTF8=1` **改不了它**。`encoding="locale"` 走的是 `locale.getencoding()`,该函数**按设计不受 UTF-8 模式影响**(`getpreferredencoding(False)` 才受)。实测两者下 `src` 都不在 `sys.path`。
+  - `uv run` 同样无效(它不设 `PYTHONPATH`,也不重写 `.pth`)。
+  - `GetShortPathName` 拿 8.3 短名绕过:本机 D 盘**禁用了短名生成**,原样返回长路径,不可用。
+  - 唯一能立刻见效的是 `PYTHONPATH=<repo>/src`(实测七个包全部 import 成功),但那是绕过症状,且每个入口都要记得设。
+- **解决**:把项目放到**纯 ASCII 路径**下(如 `D:\projects\TaskForce_Agent-master`)。移完 `.pth` 内容全 ASCII,任何编码下都能正确解码,uv run / pytest / CLI / desktop 四个入口都不需要额外设置。移动后 `.venv` 要删掉重建(`uv sync`,有缓存所以很快)。
+- **关联**:pyproject.toml(`[tool.hatch.build.targets.wheel]` 下方已就地记了这条);**经验**:① 中文 Windows 上,「路径含非 ASCII 字符」会以各种诡异方式破坏依赖 PTH 解析的工具链,editable 安装首当其冲——项目路径就用纯 ASCII,别赌;② 遇到"第三方包都在、只有本地包不在"的 `ModuleNotFoundError`,先怀疑 `.pth` 而不是打包配置;③ 诊断手法:直接读 `.pth` 原始字节 + 按不同编码解码比对,一次就能定性。

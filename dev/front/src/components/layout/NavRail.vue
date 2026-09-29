@@ -2,13 +2,22 @@
 // 导航轨:品牌标记 + 4 个「图标 + 文字」入口 + 底部后端健康状态点。
 // 状态点接真实轮询(与设置页共用同一份数据,见 composables/useHealthPoll.ts):
 // 悬停显示 status/db/sandbox 明细,不再有"假数据"占位。
-import { computed } from 'vue'
+//
+// ⚠️【阶段1 临时停用】挂载轮询 —— NavRail 在布局里常驻,一挂载就注册 health 消费方,
+// 于是整个进程生命周期内每 30s 打一次 GET /health;而后端 /health 会真实探活远程沙箱,
+// 有计费与 TTL 风险。等阶段1 功能稳定、与 API-CONTRACT.md 同步后一起恢复。
+import { computed, ref } from 'vue'
+
+import type { HealthStatus } from '@/api/health'
 
 import StatusDot from '@/components/common/StatusDot.vue'
 import { healthTooltip, overallState } from '@/components/settings/healthModel'
-import { useHealthPoll } from '@/composables/useHealthPoll'
-
-const { data } = useHealthPoll()
+// 【阶段1 临时停用】恢复时取消注释下面两行,并删掉紧随其后的 data 占位。
+// import { useHealthPoll } from '@/composables/useHealthPoll'
+//
+// const { data } = useHealthPoll()
+/** 阶段1 临时:不轮询,恒为 null。overallState/healthTooltip 对 null 已各自退化为灰点与"尚未取到健康状态"。 */
+const data = ref<HealthStatus | null>(null)
 const health = computed(() => ({
   state: overallState(data.value),
   tip: healthTooltip(data.value),
